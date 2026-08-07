@@ -1,12 +1,16 @@
 # AI Code Assistant
 
 A production-grade AI coding assistant web application. This project is built
-incrementally across phases — **Phase 1** delivers the full application
-foundation: Flask application factory, PostgreSQL-backed models, user
-authentication scaffolding, Dockerized deployment, CI pipelines, and a test
-suite.
+incrementally across phases:
 
-> **Status:** Phase 1 — foundation and authentication scaffolding.
+- **Phase 1** — application foundation: Flask application factory,
+  PostgreSQL-backed models, user authentication scaffolding, Dockerized
+  deployment, CI pipelines, and a test suite.
+- **Phase 3** — AI core features: chat interface with streaming responses,
+  prompt library, AI code generation and analysis tools, file upload, and
+  conversation management.
+
+> **Status:** Phase 3 — AI core features implemented.
 
 ## Table of contents
 
@@ -37,6 +41,24 @@ suite.
 - **Clean UI** — dark, developer-focused theme with responsive vanilla CSS and
   progressive-enhancement JavaScript.
 
+### Phase 3 — AI core features
+
+- **AI chat interface** — per-user conversations, message history, live
+  server-sent-event (SSE) streaming, typing indicator, and client-side
+  Markdown rendering with code blocks.
+- **Prompt management** — save, edit, delete, favorite, categorize, and search
+  reusable prompt templates.
+- **AI code generation** — generate code from natural language, plus code
+  actions: explain, refactor, find bugs, optimize, add comments, write
+  documentation, and draft commit messages.
+- **File support** — upload source files and run AI analysis over their
+  contents (multi-language, UTF-8 text).
+- **Conversation management** — rename, pin, search, delete, and export
+  conversations as JSON.
+- **Provider abstraction** — a provider-agnostic LLM service layer with an
+  offline **mock provider** (default) and an OpenAI-compatible client. Set
+  `LLM_PROVIDER=openai` and `OPENAI_API_KEY` for real responses.
+
 ## Tech stack
 
 | Layer        | Technology                                        |
@@ -45,7 +67,8 @@ suite.
 | Database     | PostgreSQL 16 (SQLite fallback for local dev)     |
 | Auth         | Flask-Login, Flask-WTF, Werkzeug hashing          |
 | Migrations   | Flask-Migrate (Alembic)                           |
-| Frontend     | HTML, vanilla CSS, vanilla JavaScript             |
+| AI providers | Provider-agnostic service layer (mock + OpenAI)   |
+| Frontend     | HTML, vanilla CSS, vanilla JavaScript (SSE)       |
 | Infrastructure | Docker, Docker Compose, GitHub Actions          |
 | Quality      | pytest, ruff, black                               |
 
@@ -56,10 +79,14 @@ suite.
 ├── .github/workflows/     # GitHub Actions CI pipelines
 ├── app/
 │   ├── auth/              # Authentication blueprint (register/login/logout)
+│   ├── chat/              # Chat blueprint (conversations, SSE streaming)
 │   ├── main/              # Public routes, landing page, health check
-│   ├── models/            # SQLAlchemy models (User)
+│   ├── models/            # SQLAlchemy models (User, Conversation, Message, Prompt)
+│   ├── prompts/           # Prompt library blueprint (CRUD, search, favorites)
+│   ├── services/          # Service layer (LLM providers)
 │   ├── static/            # CSS and JavaScript assets
 │   ├── templates/         # Jinja2 templates (pages + error pages)
+│   ├── tools/             # AI tools blueprint (generate, analyze, actions)
 │   ├── config.py          # Environment-based configuration
 │   ├── extensions.py      # Shared Flask extension instances
 │   └── __init__.py        # Application factory
@@ -141,10 +168,20 @@ All configuration is environment-driven (see `.env.example`):
 | `SECRET_KEY`         | dev-only     | Flask secret — **required in production** |
 | `DATABASE_URL`       | SQLite file  | SQLAlchemy connection string             |
 | `SESSION_LIFETIME`   | `43200`      | Session lifetime in seconds              |
+| `LLM_PROVIDER`       | `mock`       | LLM backend: `mock` (offline) or `openai`|
+| `OPENAI_API_KEY`     | unset        | API key for the OpenAI provider          |
+| `OPENAI_BASE_URL`    | OpenAI       | Custom/compatible endpoint               |
+| `OPENAI_MODEL`       | `gpt-4o-mini`| Model used by the OpenAI provider        |
+| `MAX_CONTENT_LENGTH` | `16777216`   | Max uploaded file size in bytes          |
 
 The production configuration fails fast at startup if `SECRET_KEY` or a
 PostgreSQL `DATABASE_URL` is missing — it will never silently run with
 insecure defaults.
+
+> The app runs fully offline with the default **mock provider**: chat replies,
+> code generation, and file analysis all work with canned responses. To enable
+> real AI responses set `LLM_PROVIDER=openai` and `OPENAI_API_KEY` (or point
+> `OPENAI_BASE_URL` at an OpenAI-compatible server).
 
 ## CI / CD
 
@@ -158,10 +195,10 @@ GitHub Actions runs on every push to `main` and on pull requests:
 
 Planned phases (tracked as GitHub issues):
 
-- **Phase 2** — AI assistant chat UI, message persistence, API keys, streaming
-  responses, and provider integration (OpenAI/Anthropic).
-- **Phase 3** — Workspaces, projects, file storage, and session history.
-- **Phase 4** — Real-time collaboration, code review, and quality tooling.
+- **Phase 4** — Production hardening: token usage tracking, rate limiting,
+  retries, API-key encryption, prompt-injection hardening, and audit logging.
+- **Phase 5** — Workspaces, projects, and file storage.
+- **Phase 6** — Real-time collaboration, code review, and quality tooling.
 
 ## License
 

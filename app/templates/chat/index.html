@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Chat - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+  <aside class="chat-sidebar">
+    <div class="sidebar-header">
+      <h2>Conversations</h2>
+      <button id="new-conversation" class="btn btn-primary btn-sm" type="button">+ New</button>
+    </div>
+    <input id="conversation-search" class="sidebar-search" type="search" placeholder="Search conversations...">
+    <ul id="conversation-list" class="conversation-list">
+      {% for conversation in conversations %}
+        <li class="conversation-item{% if loop.first %} active{% endif %}"
+            data-id="{{ conversation.id }}"
+            data-title="{{ conversation.title }}">
+          <span class="conversation-title">{{ conversation.title }}</span>
+          <span class="conversation-meta">{{ conversation.message_count }} messages</span>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if not conversations %}
+      <p class="sidebar-empty">No conversations yet. Start chatting below!</p>
+    {% endif %}
+  </aside>
+
+  <section class="chat-main">
+    <div id="chat-messages" class="chat-messages" aria-live="polite">
+      <div class="chat-placeholder">
+        <p>Start a conversation with the AI assistant.</p>
+      </div>
+    </div>
+
+    <div class="chat-composer">
+      <textarea id="chat-input" rows="3" placeholder="Ask for code, explanations, or help..."></textarea>
+      <div class="composer-actions">
+        <button id="send-message" class="btn btn-primary" type="button">Send</button>
+      </div>
+      <p class="chat-hint">The assistant streams its reply. Markdown and code blocks are supported.</p>
+    </div>
+  </section>
+</div>
+
+<div id="conversation-actions" class="conversation-actions" hidden>
+  <button id="rename-conversation" class="btn btn-ghost btn-sm" type="button">Rename</button>
+  <button id="pin-conversation" class="btn btn-ghost btn-sm" type="button">Pin</button>
+  <button id="export-conversation" class="btn btn-ghost btn-sm" type="button">Export</button>
+  <button id="delete-conversation" class="btn btn-ghost btn-sm btn-danger" type="button">Delete</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

@@ -16,6 +16,7 @@ email-validator==2.2.0
 
 # Utilities
 python-dotenv==1.1.0
+requests==2.32.4
 
 # Production server
 gunicorn==23.0.0

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Prompts - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="prompts-header">
+  <h1>Prompt Library</h1>
+  <button id="new-prompt" class="btn btn-primary" type="button">+ New Prompt</button>
+</div>
+
+<div class="prompts-toolbar">
+  <input id="prompt-search" class="sidebar-search" type="search" placeholder="Search prompts...">
+  <select id="prompt-category-filter" class="prompt-filter">
+    <option value="">All categories</option>
+  </select>
+  <label class="checkbox prompt-fav-filter">
+    <input type="checkbox" id="prompt-fav-only">
+    Favorites only
+  </label>
+</div>
+
+<div id="prompt-list" class="prompt-grid"></div>
+
+<div id="prompt-editor" class="prompt-editor" hidden>
+  <h2 id="prompt-editor-title">New Prompt</h2>
+  <input id="prompt-title" class="field-input" placeholder="Title">
+  <input id="prompt-category" class="field-input" placeholder="Category (default: General)">
+  <textarea id="prompt-content" class="field-textarea" rows="8" placeholder="Prompt template content..."></textarea>
+  <div class="prompt-editor-actions">
+    <button id="prompt-save" class="btn btn-primary" type="button">Save</button>
+    <button id="prompt-cancel" class="btn btn-ghost" type="button">Cancel</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/prompts.js') }}"></script>
+{% endblock %}

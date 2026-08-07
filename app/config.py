@@ -59,6 +59,9 @@ class Config:
     # Maximum size of an uploaded file in bytes (configured for future phases).
     MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", 16 * 1024 * 1024))
 
+    # LLM provider backend: "mock" (default, offline) or "openai".
+    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "mock")
+
 
 class DevelopmentConfig(Config):
     """Local development configuration."""
