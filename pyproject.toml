@@ -9,6 +9,7 @@ license = { file = "LICENSE" }
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+pythonpath = ["."]
 filterwarnings = ["error::DeprecationWarning"]
 
 [tool.ruff]

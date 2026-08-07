@@ -37,6 +37,7 @@ RUN apt-get update \
 
 WORKDIR /app
 
+COPY requirements.txt .
 COPY --from=builder /wheels /wheels
 RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt \
     && rm -rf /wheels
