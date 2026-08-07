@@ -3,10 +3,12 @@
 A production-grade AI coding assistant web application. This project is built
 incrementally across phases:
 
-- **Phase 1** — application foundation: Flask application factory,
-  PostgreSQL-backed models, user authentication scaffolding, Dockerized
-  deployment, CI pipelines, and a test suite.
-- **Phase 3** — AI core features: chat interface with streaming responses,
+- **Phase 1** — Application Foundation: Flask application factory,
+  PostgreSQL-backed models, Dockerized deployment, CI pipelines, and a test
+  suite.
+- **Phase 2** — Authentication & User Management: registration, login,
+  logout, password hashing, and account management.
+- **Phase 3** — AI Core Features: chat interface with streaming responses,
   prompt library, AI code generation and analysis tools, file upload, and
   conversation management.
 
@@ -40,6 +42,22 @@ incrementally across phases:
   Docker image build on every push/PR.
 - **Clean UI** — dark, developer-focused theme with responsive vanilla CSS and
   progressive-enhancement JavaScript.
+
+### Phase 2 — Authentication & user management
+
+- **Registration** — create an account with a username and email; validates
+  username length, email format, password strength (minimum 8 characters),
+  password confirmation, and uniqueness of both username and email.
+- **Login & logout** — email/password authentication with a remember-me
+  option, last-login timestamp tracking, and disabled-account detection.
+- **Password security** — salted password hashes via Werkzeug
+  (`generate_password_hash` / `check_password_hash`); plain text is never
+  stored.
+- **Session management** — Flask-Login sessions with `@login_required`
+  protection on authenticated routes and a shared account page (`/auth/me`).
+- **Safe redirects** — post-login redirects are validated against an
+  open-redirect attack (only same-host URLs are allowed).
+- **CSRF protection** — all state-changing forms are protected via Flask-WTF.
 
 ### Phase 3 — AI core features
 
