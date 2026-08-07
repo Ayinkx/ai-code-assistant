@@ -14,8 +14,11 @@ incrementally across phases:
 - **Phase 4** — GitHub Integration & Repository Intelligence: OAuth connection,
   repository browser, commit history, issues and pull requests with AI
   analysis, and encrypted token storage.
+- **Phase 5** — AI Workspaces & Project Intelligence: workspace CRUD, project
+  import (GitHub or archive upload), lazy file explorer, project-wide search,
+  AI project chat and analyses, and a project health dashboard.
 
-> **Status:** Phase 4 — GitHub integration implemented.
+> **Status:** Phase 5 — Workspaces and project intelligence implemented.
 
 ## Table of contents
 
@@ -111,6 +114,41 @@ incrementally across phases:
   their own token, so GitHub's own permission model decides which
   repositories are accessible; no secrets are ever exposed to the client.
 
+### Phase 5 — AI workspaces & project intelligence
+
+- **Workspaces** — per-user workspaces with create, rename, delete, and a
+  dashboard listing projects with import status.
+- **Project import** — import a codebase from a connected GitHub repository
+  or an uploaded `.zip` / `.tar.gz` archive. GitHub imports walk the blob
+  tree and fetch bounded file contents; archive extraction is done entirely
+  in memory (nothing is written to disk).
+- **Import security** — archive members with absolute paths, `..` traversal,
+  or symlinks are rejected/skipped; archive size, expanded size, and
+  file-count caps (zip-bomb protection); VCS/vendor directories and secret
+  files (`.env`, `.pem`, `.key`, …) are skipped; binary and oversized files
+  keep metadata but no searchable content.
+- **Lazy file explorer** — tree and single-file APIs load directories on
+  demand and reject traversal paths; the file viewer shows language, size,
+  and content with binary/oversized markers.
+- **Project-wide search** — bounded filename and content search with literal
+  (escaped) matching, case toggle, and match snippets; binary files are
+  excluded from content hits.
+- **AI project chat** — ask questions about the project; context is *bounded*
+  (keyword-scored paths, key files, content fallback within a fixed character
+  budget — never a whole-project dump) and available over SSE streaming.
+- **AI analyses** — architecture, bug review, refactoring, test coverage,
+  documentation, and dependency analyses. Findings are labeled
+  `[CONFIRMED]` (supported by the files) versus `[SUGGESTION]` (inference).
+- **Dependency inventory** — real manifests are parsed (`requirements.txt`,
+  `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `Pipfile`,
+  `Gemfile`, `composer.json`); nothing is fabricated, and unpinned/insecure
+  claims are surfaced only as `[SUGGESTION]`s.
+- **Prompt-injection resistance** — repository file contents are explicitly
+  framed as untrusted DATA in the system prompt, so instructions embedded in
+  imported files are not followed.
+- **Health dashboard** — per-project stats: file/searchable/test/doc counts,
+  languages, dependency count, manifests, and indexing duration.
+
 ## Tech stack
 
 | Layer        | Technology                                        |
@@ -137,10 +175,11 @@ incrementally across phases:
 │   ├── main/              # Public routes, landing page, health check
 │   ├── models/            # SQLAlchemy models (User, GithubAccount, ...)
 │   ├── prompts/           # Prompt library blueprint (CRUD, search, favorites)
-│   ├── services/          # Service layer (LLM providers, GitHub API, crypto)
+│   ├── services/          # Service layer (LLM providers, GitHub API, crypto, import/search/analysis)
 │   ├── static/            # CSS and JavaScript assets
 │   ├── templates/         # Jinja2 templates (pages + error pages)
 │   ├── tools/             # AI tools blueprint (generate, analyze, actions)
+│   ├── workspaces/        # Workspaces & project intelligence blueprint (Phase 5)
 │   ├── config.py          # Environment-based configuration
 │   ├── extensions.py      # Shared Flask extension instances
 │   └── __init__.py        # Application factory
@@ -251,6 +290,15 @@ All configuration is environment-driven (see `.env.example`):
 | `GITHUB_SCOPES`      | `read:user repo` | OAuth scopes requested on connect    |
 | `GITHUB_REQUEST_TIMEOUT` | `30`     | GitHub API request timeout (seconds)     |
 | `GITHUB_MAX_CONTEXT_CHARS` | `40000` | Max repo context sent to the LLM       |
+| `PROJECT_MAX_ARCHIVE_BYTES` | `52428800` | Max uploaded project archive (50 MB) |
+| `PROJECT_MAX_SIZE_BYTES` | `524288000` | Max expanded project size (500 MB)   |
+| `PROJECT_MAX_FILE_COUNT` | `20000`   | Max files importable into one project  |
+| `PROJECT_MAX_FILE_CHARS` | `200000`  | Max text content stored per file       |
+| `PROJECT_MAX_CONTEXT_CHARS` | `40000` | Max project context sent to the LLM  |
+| `PROJECT_SEARCH_MAX_RESULTS` | `100` | Max results returned by one search query |
+| `PROJECT_GITHUB_MAX_FILES` | `1000`   | Max file contents fetched per GitHub import |
+| `PROJECT_SKIP_DIRS`    | `.git,node_modules,…` | Directory basenames skipped on import |
+| `PROJECT_SKIP_SECRET_FILES` | `.env,.pem,…` | File names/prefixes skipped on import |
 
 The production configuration fails fast at startup if `SECRET_KEY` or a
 PostgreSQL `DATABASE_URL` is missing — it will never silently run with
@@ -273,7 +321,6 @@ GitHub Actions runs on every push to `main` and on pull requests:
 
 Planned phases (tracked as GitHub issues):
 
-- **Phase 5** — Workspaces, projects, and file storage.
 - **Phase 6** — Real-time collaboration, code review, and quality tooling.
 
 ## License

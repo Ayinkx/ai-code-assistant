@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }} - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="github-header">
+  <div>
+    <h1>
+      <a class="repo-breadcrumb" href="{{ url_for('workspaces.index') }}">Workspaces</a>
+      / <a class="repo-breadcrumb" href="{{ url_for('workspaces.detail', workspace_id=workspace.id) }}">{{ workspace.name }}</a>
+      / {{ project.name }}
+    </h1>
+    <p class="repo-meta">
+      {{ project.source }}{% if project.source_url %} · <span id="project-source-url">{{ project.source_url }}</span>{% endif %}
+      · <span id="project-status" class="project-status project-status-{{ project.status }}">{{ project.status }}</span>
+      {% if project.status == 'ready' %} · {{ project.file_count }} files{% endif %}
+    </p>
+  </div>
+  <button id="delete-project" class="btn btn-ghost btn-sm btn-danger" type="button">Delete</button>
+</div>
+
+<div class="project-layout">
+  <aside class="project-sidebar">
+    <div class="sidebar-header">
+      <h2>Files</h2>
+      <button id="refresh-tree" class="btn btn-ghost btn-sm" type="button" title="Reload tree">↻</button>
+    </div>
+    <div id="project-tree" class="project-tree"><p class="sidebar-empty">Loading files...</p></div>
+  </aside>
+
+  <section class="project-main">
+    <div class="repo-tabs" id="project-tabs">
+      <button class="repo-tab active" data-tab="files" type="button">Files</button>
+      <button class="repo-tab" data-tab="search" type="button">Search</button>
+      <button class="repo-tab" data-tab="chat" type="button">AI Chat</button>
+      <button class="repo-tab" data-tab="analysis" type="button">Analysis</button>
+      <button class="repo-tab" data-tab="stats" type="button">Stats</button>
+    </div>
+
+    <div id="tab-files" class="project-tab">
+      <div id="file-viewer" class="analysis-output">
+        <p class="sidebar-empty">Select a file on the left to view it.</p>
+      </div>
+    </div>
+
+    <div id="tab-search" class="project-tab" hidden>
+      <div class="repo-toolbar">
+        <input id="search-query" class="sidebar-search" type="search" placeholder="Search file names and contents...">
+        <label class="checkbox"><input type="checkbox" id="search-case"> Case sensitive</label>
+        <button id="search-run" class="btn btn-primary btn-sm" type="button">Search</button>
+      </div>
+      <div id="search-results" class="search-results"><p class="sidebar-empty">Enter a query to search the project.</p></div>
+    </div>
+
+    <div id="tab-chat" class="project-tab" hidden>
+      <div id="project-chat-messages" class="chat-messages project-chat-messages">
+        <div class="chat-placeholder">
+          <p>Ask questions about this project. The assistant retrieves a bounded slice of context before answering.</p>
+        </div>
+      </div>
+      <div class="chat-composer">
+        <textarea id="project-chat-input" rows="3" placeholder="Ask about the project code, architecture, or bugs..."></textarea>
+        <div class="composer-actions">
+          <button id="project-chat-send" class="btn btn-primary" type="button">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-analysis" class="project-tab" hidden>
+      <div class="repo-toolbar">
+        <button class="btn btn-ghost btn-sm analysis-btn active" data-kind="architecture" type="button">Architecture</button>
+        <button class="btn btn-ghost btn-sm analysis-btn" data-kind="bugs" type="button">Bugs</button>
+        <button class="btn btn-ghost btn-sm analysis-btn" data-kind="refactor" type="button">Refactor</button>
+        <button class="btn btn-ghost btn-sm analysis-btn" data-kind="tests" type="button">Tests</button>
+        <button class="btn btn-ghost btn-sm analysis-btn" data-kind="docs" type="button">Docs</button>
+        <button class="btn btn-ghost btn-sm analysis-btn" data-kind="dependencies" type="button">Dependencies</button>
+      </div>
+      <div id="analysis-output" class="analysis-output">
+        <p class="sidebar-empty">Choose an analysis to inspect the project.</p>
+      </div>
+    </div>
+
+    <div id="tab-stats" class="project-tab" hidden>
+      <div id="stats-output" class="analysis-output"><p class="sidebar-empty">Loading project health...</p></div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/project.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}{{ workspace.name }} - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="github-header">
+  <div>
+    <h1>
+      <a class="repo-breadcrumb" href="{{ url_for('workspaces.index') }}">Workspaces</a>
+      / <span id="workspace-name">{{ workspace.name }}</span>
+    </h1>
+    <p id="workspace-description" class="repo-meta">{{ workspace.description or 'No description.' }}</p>
+  </div>
+  <div class="repo-toolbar">
+    <button id="rename-workspace" class="btn btn-ghost btn-sm" type="button">Rename</button>
+    <button id="delete-workspace" class="btn btn-ghost btn-sm btn-danger" type="button">Delete</button>
+  </div>
+</div>
+
+<div class="prompt-editor">
+  <h2>Import a project</h2>
+  <p class="field-hint">Upload an archive (.zip or .tar.gz) of your code, or import a public/accessible GitHub repository you are connected to. Archives are scanned in-memory: traversal paths and symlinks are rejected, size caps are enforced, and obvious secret files are skipped.</p>
+  <div class="prompt-editor-actions">
+    <input id="import-archive" class="field-input" type="file" accept=".zip,.tar,.tar.gz,.tgz">
+    <button id="import-archive-btn" class="btn btn-primary" type="button">Upload</button>
+  </div>
+  <div class="prompt-editor-actions">
+    <input id="import-repo" class="field-input" type="text" list="connected-repos" placeholder="GitHub repository (owner/name)">
+    <datalist id="connected-repos"></datalist>
+    <button id="import-github-btn" class="btn btn-primary" type="button">Import from GitHub</button>
+  </div>
+  <p id="import-status" class="field-hint" hidden></p>
+</div>
+
+<div class="project-list">
+  <h2>Projects</h2>
+  {% for project in workspace.projects %}
+    <div class="project-row" data-id="{{ project.id }}">
+      <div>
+        <a class="project-name" href="{{ url_for('workspaces.project_explorer', workspace_id=workspace.id, project_id=project.id) }}">{{ project.name }}</a>
+        <p class="project-meta">
+          {{ project.source }}{% if project.source_url %} · {{ project.source_url }}{% endif %}
+          · <span class="project-status project-status-{{ project.status }}">{{ project.status }}</span>
+          {% if project.status == 'ready' %} · {{ project.file_count }} files{% endif %}
+        </p>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-danger delete-project" type="button" data-id="{{ project.id }}">Delete</button>
+    </div>
+  {% endfor %}
+</div>
+
+{% if not workspace.projects %}
+  <div class="analysis-output">
+    <p class="sidebar-empty">No projects imported yet. Add one above.</p>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/workspace_detail.js') }}"></script>
+{% endblock %}

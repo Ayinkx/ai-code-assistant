@@ -1,0 +1,174 @@
+// AI Code Assistant — workspace detail page
+// Project import (archive upload + GitHub), workspace rename/delete, and
+// project deletion.
+
+(function () {
+  "use strict";
+
+  var WORKSPACE_ID = null;
+
+  function getCsrf() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta) return meta.content;
+    var input = document.querySelector('input[name="csrf_token"]');
+    return input ? input.value : "";
+  }
+
+  function flash(message, category) {
+    var stack = document.querySelector(".flash-stack");
+    if (!stack) {
+      stack = document.createElement("div");
+      stack.className = "flash-stack";
+      var main = document.querySelector(".main-content");
+      (main || document.body).prepend(stack);
+    }
+    var el = document.createElement("div");
+    el.className = "flash flash-" + (category || "info");
+    el.textContent = message;
+    stack.appendChild(el);
+    setTimeout(function () { el.remove(); }, 6000);
+  }
+
+  function api(url, options) {
+    options = options || {};
+    options.headers = Object.assign({}, options.headers || {}, {
+      "X-CSRFToken": getCsrf(),
+    });
+    return fetch(url, options).then(function (response) {
+      return response.json().then(function (data) {
+        if (!response.ok) {
+          var error = new Error(data && data.error ? data.error : "Request failed (" + response.status + ").");
+          throw error;
+        }
+        return data;
+      });
+    });
+  }
+
+  function setStatus(message) {
+    var status = document.getElementById("import-status");
+    status.hidden = !message;
+    status.textContent = message || "";
+  }
+
+  function importArchive() {
+    var input = document.getElementById("import-archive");
+    var btn = document.getElementById("import-archive-btn");
+    if (!input.files.length) {
+      flash("Choose an archive to upload.", "warning");
+      return;
+    }
+    var data = new FormData();
+    data.append("file", input.files[0]);
+    btn.disabled = true;
+    setStatus("Indexing archive, please wait...");
+    api("/workspaces/api/workspaces/" + WORKSPACE_ID + "/projects", {
+      method: "POST",
+      body: data,
+    })
+      .then(function (project) {
+        flash("Imported " + project.name + " (" + project.file_count + " files).", "success");
+        window.location.href = "/workspaces/" + WORKSPACE_ID + "/projects/" + project.id;
+      })
+      .catch(function (error) {
+        setStatus("");
+        flash(error.message, "error");
+        btn.disabled = false;
+      });
+  }
+
+  function importGithub() {
+    var input = document.getElementById("import-repo");
+    var btn = document.getElementById("import-github-btn");
+    var repo = input.value.trim();
+    if (!repo) {
+      flash("Enter a repository in the form owner/name.", "warning");
+      return;
+    }
+    btn.disabled = true;
+    setStatus("Importing repository, please wait...");
+    api("/workspaces/api/workspaces/" + WORKSPACE_ID + "/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source: "github", repo: repo }),
+    })
+      .then(function (project) {
+        flash("Imported " + project.name + " (" + project.file_count + " files).", "success");
+        window.location.href = "/workspaces/" + WORKSPACE_ID + "/projects/" + project.id;
+      })
+      .catch(function (error) {
+        setStatus("");
+        flash(error.message, "error");
+        btn.disabled = false;
+      });
+  }
+
+  function loadConnectedRepos() {
+    api("/github/api/repos?per_page=100")
+      .then(function (repos) {
+        var datalist = document.getElementById("connected-repos");
+        datalist.innerHTML = "";
+        repos.forEach(function (repo) {
+          var option = document.createElement("option");
+          option.value = repo.full_name;
+          option.textContent = repo.full_name;
+          datalist.appendChild(option);
+        });
+      })
+      .catch(function () {
+        // Not connected to GitHub; users can still type owner/name manually.
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var wsName = document.getElementById("workspace-name");
+    var wsDesc = document.getElementById("workspace-description");
+    var urlParts = window.location.pathname.split("/").filter(Boolean);
+    WORKSPACE_ID = parseInt(urlParts[urlParts.length - 1], 10) || 0;
+
+    document.getElementById("import-archive-btn").addEventListener("click", importArchive);
+    document.getElementById("import-github-btn").addEventListener("click", importGithub);
+    loadConnectedRepos();
+
+    document.getElementById("rename-workspace").addEventListener("click", function () {
+      var name = prompt("Rename workspace:", wsName.textContent.trim());
+      if (name === null) return;
+      api("/workspaces/api/workspaces/" + WORKSPACE_ID, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name }),
+      })
+        .then(function (workspace) {
+          wsName.textContent = workspace.name;
+        })
+        .catch(function (error) {
+          flash(error.message, "error");
+        });
+    });
+
+    document.getElementById("delete-workspace").addEventListener("click", function () {
+      if (!confirm("Delete this workspace and all of its projects?")) return;
+      api("/workspaces/api/workspaces/" + WORKSPACE_ID, { method: "DELETE" })
+        .then(function () {
+          window.location.href = "/workspaces/";
+        })
+        .catch(function (error) {
+          flash(error.message, "error");
+        });
+    });
+
+    document.querySelectorAll(".delete-project").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.dataset.id;
+        if (!confirm("Delete this project and its indexed files?")) return;
+        api("/workspaces/api/projects/" + id, { method: "DELETE" })
+          .then(function () {
+            btn.closest(".project-row").remove();
+          })
+          .catch(function (error) {
+            flash(error.message, "error");
+          });
+      });
+    });
+  });
+})();

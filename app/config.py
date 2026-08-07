@@ -71,6 +71,28 @@ class Config:
     GITHUB_REQUEST_TIMEOUT = int(os.getenv("GITHUB_REQUEST_TIMEOUT", "30"))
     GITHUB_MAX_CONTEXT_CHARS = int(os.getenv("GITHUB_MAX_CONTEXT_CHARS", "40000"))
 
+    # Project workspaces (Phase 5): limits that protect the server from being
+    # overwhelmed by large or malicious project imports. Archives are validated
+    # during extraction (path traversal, symlinks, size and file-count caps) and
+    # only bounded, sanitized metadata + text content is stored.
+    PROJECT_MAX_ARCHIVE_BYTES = int(os.getenv("PROJECT_MAX_ARCHIVE_BYTES", str(50 * 1024 * 1024)))
+    PROJECT_MAX_SIZE_BYTES = int(os.getenv("PROJECT_MAX_SIZE_BYTES", str(500 * 1024 * 1024)))
+    PROJECT_MAX_FILE_COUNT = int(os.getenv("PROJECT_MAX_FILE_COUNT", "20000"))
+    PROJECT_MAX_FILE_CHARS = int(os.getenv("PROJECT_MAX_FILE_CHARS", "200000"))
+    PROJECT_MAX_CONTEXT_CHARS = int(os.getenv("PROJECT_MAX_CONTEXT_CHARS", "40000"))
+    PROJECT_SEARCH_MAX_RESULTS = int(os.getenv("PROJECT_SEARCH_MAX_RESULTS", "100"))
+    PROJECT_GITHUB_MAX_FILES = int(os.getenv("PROJECT_GITHUB_MAX_FILES", "1000"))
+    PROJECT_SKIP_DIRS = os.getenv(
+        "PROJECT_SKIP_DIRS",
+        ".git,.hg,.svn,node_modules,.venv,venv,__pycache__,.next,.cache,dist,build,"
+        "vendor,.tox,.mypy_cache,.pytest_cache",
+    )
+    PROJECT_SKIP_SECRET_FILES = os.getenv(
+        "PROJECT_SKIP_SECRET_FILES",
+        ".env,.pem,.key,.p12,.pfx,id_rsa,id_ed25519,id_dsa,credentials,.htpasswd,"
+        ".npmrc,.pypirc,secrets.yaml,secret.yaml,secret.yml",
+    )
+
 
 class DevelopmentConfig(Config):
     """Local development configuration."""

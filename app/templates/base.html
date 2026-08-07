@@ -23,6 +23,7 @@
           <a class="nav-link" href="{{ url_for('chat.index') }}">Chat</a>
           <a class="nav-link" href="{{ url_for('prompts.index') }}">Prompts</a>
           <a class="nav-link" href="{{ url_for('github.repos') }}">GitHub</a>
+          <a class="nav-link" href="{{ url_for('workspaces.index') }}">Workspaces</a>
           <a class="nav-link" href="{{ url_for('auth.me') }}">Account</a>
           <form class="inline-form" method="POST" action="{{ url_for('auth.logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

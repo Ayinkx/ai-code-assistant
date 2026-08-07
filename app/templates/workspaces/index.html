@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Workspaces - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="github-header">
+  <div>
+    <h1>Workspaces</h1>
+    <p class="repo-meta">Organize imported projects and let the AI assistant explore, search, and analyze them.</p>
+  </div>
+  <button id="new-workspace" class="btn btn-primary" type="button">+ New workspace</button>
+</div>
+
+<div id="workspace-grid" class="workspace-grid">
+  {% for workspace in workspaces %}
+    <a class="workspace-card" href="{{ url_for('workspaces.detail', workspace_id=workspace.id) }}">
+      <div class="workspace-card-header">
+        <h3 class="workspace-name">{{ workspace.name }}</h3>
+        <span class="tag">{{ workspace.project_count }} project{{ '' if workspace.project_count == 1 else 's' }}</span>
+      </div>
+      {% if workspace.description %}
+        <p class="workspace-description">{{ workspace.description }}</p>
+      {% endif %}
+      <p class="workspace-meta">Updated {{ workspace.updated_at.strftime('%b %d, %Y') if workspace.updated_at else 'recently' }}</p>
+    </a>
+  {% endfor %}
+</div>
+
+{% if not workspaces %}
+  <div class="analysis-output">
+    <p class="sidebar-empty">No workspaces yet. Create one to import a project and start exploring it.</p>
+  </div>
+{% endif %}
+
+<div id="workspace-modal" class="modal" hidden>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>New workspace</h2>
+      <button type="button" class="btn btn-ghost btn-sm modal-close">×</button>
+    </div>
+    <div class="modal-body">
+      <label class="field-hint" for="ws-name">Name</label>
+      <input id="ws-name" class="field-input" type="text" maxlength="200" placeholder="My project">
+      <label class="field-hint" for="ws-description">Description</label>
+      <textarea id="ws-description" class="field-input" rows="3" maxlength="2000" placeholder="What is this project about?"></textarea>
+      <div class="prompt-editor-actions">
+        <button id="create-workspace" class="btn btn-primary" type="button">Create</button>
+        <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/workspaces.js') }}"></script>
+{% endblock %}
