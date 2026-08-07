@@ -11,8 +11,11 @@ incrementally across phases:
 - **Phase 3** — AI Core Features: chat interface with streaming responses,
   prompt library, AI code generation and analysis tools, file upload, and
   conversation management.
+- **Phase 4** — GitHub Integration & Repository Intelligence: OAuth connection,
+  repository browser, commit history, issues and pull requests with AI
+  analysis, and encrypted token storage.
 
-> **Status:** Phase 3 — AI core features implemented.
+> **Status:** Phase 4 — GitHub integration implemented.
 
 ## Table of contents
 
@@ -77,6 +80,37 @@ incrementally across phases:
   offline **mock provider** (default) and an OpenAI-compatible client. Set
   `LLM_PROVIDER=openai` and `OPENAI_API_KEY` for real responses.
 
+### Phase 4 — GitHub integration & repository intelligence
+
+- **GitHub OAuth connection** — connect/disconnect a GitHub account through a
+  browser OAuth flow (scoped to `read:user repo`), with a signed state
+  parameter to prevent CSRF on the callback.
+- **Encrypted token storage** — access tokens are encrypted at rest with
+  Fernet (AES-128 + HMAC-SHA256) using a key derived from `SECRET_KEY`; the
+  plaintext token is never persisted, logged, or sent to the frontend.
+- **Repository browser** — list and search repositories, browse branches and
+  files (directory listing and tree view), search file names, and view file
+  contents.
+- **Commit history** — per-repository and per-path commit lists with author,
+  date, and per-commit file/patch views.
+- **Issues** — open/closed/all issue lists (pull requests excluded), issue
+  detail pages with labels and body, and one-click **AI issue analysis**
+  (summary, problem identification, suggested implementation, acceptance
+  criteria, difficulty estimate).
+- **Pull requests** — PR lists and detail pages with changed files and inline
+  diffs, plus **AI code review** that flags potential bugs while clearly
+  labeling `[CONFIRMED]` defects versus `[SUGGESTION]` hypotheses.
+- **AI repository analysis** — summarize a repository from its README and
+  structure, and ask questions about individual files. Context sent to the
+  model is bounded (`GITHUB_MAX_CONTEXT_CHARS`) so a request never uploads a
+  whole repository.
+- **API reliability** — a dedicated GitHub API client with request timeouts,
+  typed error taxonomy (auth, permission, not-found, rate-limit, network),
+  exponential backoff retries on transient failures, and rate-limit awareness.
+- **Authorization** — all GitHub API calls are made on the user's behalf with
+  their own token, so GitHub's own permission model decides which
+  repositories are accessible; no secrets are ever exposed to the client.
+
 ## Tech stack
 
 | Layer        | Technology                                        |
@@ -86,6 +120,7 @@ incrementally across phases:
 | Auth         | Flask-Login, Flask-WTF, Werkzeug hashing          |
 | Migrations   | Flask-Migrate (Alembic)                           |
 | AI providers | Provider-agnostic service layer (mock + OpenAI)   |
+| GitHub       | GitHub REST API, OAuth web flow, Fernet (cryptography) |
 | Frontend     | HTML, vanilla CSS, vanilla JavaScript (SSE)       |
 | Infrastructure | Docker, Docker Compose, GitHub Actions          |
 | Quality      | pytest, ruff, black                               |
@@ -98,10 +133,11 @@ incrementally across phases:
 ├── app/
 │   ├── auth/              # Authentication blueprint (register/login/logout)
 │   ├── chat/              # Chat blueprint (conversations, SSE streaming)
+│   ├── github/            # GitHub blueprint (OAuth, repo browser, issues, PRs)
 │   ├── main/              # Public routes, landing page, health check
-│   ├── models/            # SQLAlchemy models (User, Conversation, Message, Prompt)
+│   ├── models/            # SQLAlchemy models (User, GithubAccount, ...)
 │   ├── prompts/           # Prompt library blueprint (CRUD, search, favorites)
-│   ├── services/          # Service layer (LLM providers)
+│   ├── services/          # Service layer (LLM providers, GitHub API, crypto)
 │   ├── static/            # CSS and JavaScript assets
 │   ├── templates/         # Jinja2 templates (pages + error pages)
 │   ├── tools/             # AI tools blueprint (generate, analyze, actions)
@@ -166,6 +202,23 @@ docker compose up --build
 The `web` service applies pending migrations before starting, and exposes a
 health check at `GET /health`.
 
+### Setting up GitHub OAuth (Phase 4)
+
+1. Create an OAuth App at <https://github.com/settings/applications/new>:
+   - **Homepage URL:** `http://localhost:5000`
+   - **Authorization callback URL:** `http://localhost:5000/github/callback`
+2. Copy the **Client ID** and **Client Secret** into `.env`:
+   ```bash
+   GITHUB_CLIENT_ID=your_client_id
+   GITHUB_CLIENT_SECRET=your_client_secret
+   ```
+3. Restart the app and open **GitHub** in the navigation bar to connect your
+   account.
+
+> Tokens are encrypted before storage and used only server-side; they are
+> never exposed in the browser. To disconnect (and remove the stored token),
+> use **Disconnect** on the GitHub dashboard.
+
 ## Testing
 
 ```bash
@@ -191,6 +244,13 @@ All configuration is environment-driven (see `.env.example`):
 | `OPENAI_BASE_URL`    | OpenAI       | Custom/compatible endpoint               |
 | `OPENAI_MODEL`       | `gpt-4o-mini`| Model used by the OpenAI provider        |
 | `MAX_CONTENT_LENGTH` | `16777216`   | Max uploaded file size in bytes          |
+| `GITHUB_CLIENT_ID`   | unset        | GitHub OAuth app client ID               |
+| `GITHUB_CLIENT_SECRET`| unset       | GitHub OAuth app client secret           |
+| `GITHUB_REDIRECT_URI`| callback URL | Explicit callback URL (optional)         |
+| `GITHUB_API_URL`     | `https://api.github.com` | GitHub REST API base URL      |
+| `GITHUB_SCOPES`      | `read:user repo` | OAuth scopes requested on connect    |
+| `GITHUB_REQUEST_TIMEOUT` | `30`     | GitHub API request timeout (seconds)     |
+| `GITHUB_MAX_CONTEXT_CHARS` | `40000` | Max repo context sent to the LLM       |
 
 The production configuration fails fast at startup if `SECRET_KEY` or a
 PostgreSQL `DATABASE_URL` is missing — it will never silently run with
@@ -213,8 +273,6 @@ GitHub Actions runs on every push to `main` and on pull requests:
 
 Planned phases (tracked as GitHub issues):
 
-- **Phase 4** — Production hardening: token usage tracking, rate limiting,
-  retries, API-key encryption, prompt-injection hardening, and audit logging.
 - **Phase 5** — Workspaces, projects, and file storage.
 - **Phase 6** — Real-time collaboration, code review, and quality tooling.
 

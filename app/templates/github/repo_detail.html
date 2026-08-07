@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}{{ owner }}/{{ repo }} - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="github-header repo-header">
+  <div>
+    <h1><a class="repo-breadcrumb" href="{{ url_for('github.repos') }}">Repositories</a> / {{ owner }}/{{ repo }}</h1>
+    <div id="repo-meta" class="repo-meta">Loading repository...</div>
+  </div>
+</div>
+
+<div class="repo-tabs">
+  <button class="repo-tab active" data-tab="tree">Files</button>
+  <button class="repo-tab" data-tab="commits">Commits</button>
+  <button class="repo-tab" data-tab="issues">Issues</button>
+  <button class="repo-tab" data-tab="pulls">Pull Requests</button>
+  <button class="repo-tab" data-tab="analyze">AI Analysis</button>
+</div>
+
+<div id="tab-tree" class="repo-tab-panel">
+  <div class="repo-toolbar">
+    <select id="branch-select" class="prompt-filter">
+      <option value="HEAD">HEAD</option>
+    </select>
+    <input id="file-search" class="sidebar-search" type="search" placeholder="Search file names...">
+  </div>
+  <div id="file-browser" class="file-browser"></div>
+</div>
+
+<div id="tab-commits" class="repo-tab-panel" hidden>
+  <div id="commit-list" class="commit-list"></div>
+</div>
+
+<div id="tab-issues" class="repo-tab-panel" hidden>
+  <div class="repo-toolbar">
+    <select id="issue-state" class="prompt-filter">
+      <option value="open">Open</option>
+      <option value="closed">Closed</option>
+      <option value="all">All</option>
+    </select>
+  </div>
+  <div id="issue-list" class="issue-list"></div>
+</div>
+
+<div id="tab-pulls" class="repo-tab-panel" hidden>
+  <div class="repo-toolbar">
+    <select id="pull-state" class="prompt-filter">
+      <option value="open">Open</option>
+      <option value="closed">Closed</option>
+      <option value="all">All</option>
+    </select>
+  </div>
+  <div id="pull-list" class="issue-list"></div>
+</div>
+
+<div id="tab-analyze" class="repo-tab-panel" hidden>
+  <div class="analyze-panel">
+    <p class="github-hint">AI analysis uses a bounded slice of the repository (README, file names, and selected files) and clearly labels confirmed findings vs suggestions.</p>
+    <button id="analyze-repo" class="btn btn-primary" type="button">Summarize this repository</button>
+    <div id="repo-analysis" class="analysis-output"></div>
+  </div>
+</div>
+
+<div id="file-modal" class="modal" hidden>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="file-modal-title">File</h3>
+      <button id="file-modal-close" class="btn btn-ghost btn-sm" type="button">Close</button>
+    </div>
+    <div class="modal-toolbar">
+      <input id="file-question" class="sidebar-search" type="text" placeholder="Ask a question about this file...">
+      <button id="file-analyze" class="btn btn-ghost btn-sm" type="button">Ask AI</button>
+    </div>
+    <pre id="file-modal-body" class="code-view"></pre>
+    <div id="file-analysis" class="analysis-output" hidden></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/github.js') }}"></script>
+<script src="{{ url_for('static', filename='js/github_repo.js') }}"></script>
+{% endblock %}

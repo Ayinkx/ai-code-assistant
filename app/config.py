@@ -62,6 +62,15 @@ class Config:
     # LLM provider backend: "mock" (default, offline) or "openai".
     LLM_PROVIDER = os.getenv("LLM_PROVIDER", "mock")
 
+    # GitHub OAuth integration.
+    GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID", "")
+    GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET", "")
+    GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI", "")
+    GITHUB_API_URL = os.getenv("GITHUB_API_URL", "https://api.github.com")
+    GITHUB_SCOPES = os.getenv("GITHUB_SCOPES", "read:user repo")
+    GITHUB_REQUEST_TIMEOUT = int(os.getenv("GITHUB_REQUEST_TIMEOUT", "30"))
+    GITHUB_MAX_CONTEXT_CHARS = int(os.getenv("GITHUB_MAX_CONTEXT_CHARS", "40000"))
+
 
 class DevelopmentConfig(Config):
     """Local development configuration."""

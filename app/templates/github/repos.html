@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Repositories - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="github-header">
+  <h1>Repositories</h1>
+  <div class="github-toolbar">
+    <input id="repo-search" class="sidebar-search" type="search" placeholder="Filter repositories...">
+  </div>
+</div>
+
+<div id="repo-list" class="repo-list">
+  <p class="sidebar-empty">Loading repositories...</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/github.js') }}"></script>
+<script src="{{ url_for('static', filename='js/github_repos.js') }}"></script>
+{% endblock %}

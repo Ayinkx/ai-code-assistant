@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Issue #{{ number }} - {{ owner }}/{{ repo }} - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="github-header">
+  <div>
+    <h1><a class="repo-breadcrumb" href="{{ url_for('github.repos') }}">Repositories</a> / <a class="repo-breadcrumb" href="{{ url_for('github.repo_detail', owner=owner, repo=repo) }}">{{ owner }}/{{ repo }}</a> / <a class="repo-breadcrumb" href="{{ url_for('github.issues', owner=owner, repo=repo) }}">Issues</a> / #{{ number }}</h1>
+  </div>
+</div>
+
+<div id="issue-detail" class="issue-detail"><p class="sidebar-empty">Loading issue...</p></div>
+
+<div class="analyze-panel">
+  <button id="analyze-issue" class="btn btn-primary" type="button">Analyze with AI</button>
+  <div id="issue-analysis" class="analysis-output" hidden></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/github.js') }}"></script>
+<script src="{{ url_for('static', filename='js/github_issue.js') }}"></script>
+{% endblock %}

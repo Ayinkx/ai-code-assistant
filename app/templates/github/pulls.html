@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Pull Requests - {{ owner }}/{{ repo }} - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="github-header">
+  <div>
+    <h1><a class="repo-breadcrumb" href="{{ url_for('github.repos') }}">Repositories</a> / <a class="repo-breadcrumb" href="{{ url_for('github.repo_detail', owner=owner, repo=repo) }}">{{ owner }}/{{ repo }}</a> / Pull Requests</h1>
+    <div class="repo-toolbar">
+      <select id="pull-state" class="prompt-filter">
+        <option value="open">Open</option>
+        <option value="closed">Closed</option>
+        <option value="all">All</option>
+      </select>
+    </div>
+  </div>
+</div>
+<div id="pull-list" class="issue-list"><p class="sidebar-empty">Loading pull requests...</p></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/github.js') }}"></script>
+<script src="{{ url_for('static', filename='js/github_pulls.js') }}"></script>
+{% endblock %}
