@@ -1,0 +1,118 @@
+"""Authentication routes: register, login, and logout.
+
+Phase 1 provides the scaffolding for account management. Future phases will
+extend this blueprint with email verification, password reset, profile
+management, and session hardening.
+"""
+
+from urllib.parse import urljoin, urlparse
+
+from flask import flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required, login_user, logout_user
+
+from app.auth import bp
+from app.extensions import db
+from app.models import User
+
+
+def _is_safe_redirect_target(target: str) -> bool:
+    """Return ``True`` if ``target`` is a safe internal redirect URL.
+
+    Prevents open-redirect attacks where a ``next`` query parameter points to
+    an external host.
+    """
+    host_url = urlparse(request.host_url)
+    redirect_url = urlparse(urljoin(request.host_url, target))
+    return redirect_url.scheme in {"http", "https"} and host_url.netloc == redirect_url.netloc
+
+
+@bp.route("/register", methods=["GET", "POST"])
+def register():
+    """Create a new user account.
+
+    Validates uniqueness of username and email, hashes the password, and logs
+    the new user straight in. Email verification will be added in a later
+    phase.
+    """
+    if current_user.is_authenticated:
+        return redirect(url_for("main.index"))
+
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        password_confirm = request.form.get("password_confirm", "")
+
+        if not username or not email or not password:
+            error = "All fields are required."
+        elif len(username) < 3 or len(username) > 80:
+            error = "Username must be between 3 and 80 characters."
+        elif "@" not in email or "." not in email:
+            error = "Please enter a valid email address."
+        elif len(password) < 8:
+            error = "Password must be at least 8 characters long."
+        elif password != password_confirm:
+            error = "Passwords do not match."
+        elif User.query.filter_by(username=username).first():
+            error = "That username is already taken."
+        elif User.query.filter_by(email=email).first():
+            error = "An account with that email already exists."
+
+        if error is None:
+            user = User(username=username, email=email)
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
+            login_user(user)
+            flash("Welcome! Your account was created successfully.", "success")
+            return redirect(url_for("main.index"))
+
+    return render_template("auth/register.html", error=error)
+
+
+@bp.route("/login", methods=["GET", "POST"])
+def login():
+    """Authenticate an existing user against the stored password hash."""
+    if current_user.is_authenticated:
+        return redirect(url_for("main.index"))
+
+    error = None
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        remember = request.form.get("remember") == "on"
+
+        user = User.query.filter_by(email=email).first()
+        if user is None or not user.check_password(password):
+            error = "Invalid email or password."
+        elif not user.is_active:
+            error = "This account has been disabled. Contact support."
+        else:
+            user.touch_last_login()
+            db.session.commit()
+            login_user(user, remember=remember)
+            flash(f"Welcome back, {user.username}!", "success")
+
+            next_url = request.args.get("next")
+            if next_url and _is_safe_redirect_target(next_url):
+                return redirect(next_url)
+            return redirect(url_for("main.index"))
+
+    return render_template("auth/login.html", error=error)
+
+
+@bp.route("/logout", methods=["POST"])
+@login_required
+def logout():
+    """End the current user's session."""
+    logout_user()
+    flash("You have been logged out.", "info")
+    return redirect(url_for("auth.login"))
+
+
+@bp.route("/me")
+@login_required
+def me():
+    """Simple authenticated endpoint used to verify auth is working."""
+    return render_template("auth/me.html")

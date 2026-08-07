@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-card center">
+  <h1 class="error-code">403</h1>
+  <p class="auth-subtitle">You don't have permission to access this page.</p>
+  <a class="btn btn-primary" href="{{ url_for('main.index') }}">Back home</a>
+</div>
+{% endblock %}

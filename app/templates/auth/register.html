@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-card">
+  <h1 class="auth-title">Create your account</h1>
+  <p class="auth-subtitle">Join to start using your AI coding assistant.</p>
+
+  {% if error %}
+    <div class="flash flash-error">{{ error }}</div>
+  {% endif %}
+
+  <form method="POST" class="auth-form" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="field">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required autofocus
+             minlength="3" maxlength="80"
+             value="{{ request.form.get('username', '') }}" autocomplete="username">
+    </div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required
+             value="{{ request.form.get('email', '') }}" autocomplete="email">
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required
+             minlength="8" autocomplete="new-password">
+      <small class="field-hint">At least 8 characters.</small>
+    </div>
+
+    <div class="field">
+      <label for="password_confirm">Confirm password</label>
+      <input type="password" id="password_confirm" name="password_confirm" required
+             autocomplete="new-password">
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block">Create account</button>
+  </form>
+
+  <p class="auth-alt">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a>.</p>
+</div>
+{% endblock %}

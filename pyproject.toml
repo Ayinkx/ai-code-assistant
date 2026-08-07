@@ -1,0 +1,25 @@
+[project]
+name = "ai-code-assistant"
+version = "0.1.0"
+description = "A production-grade AI coding assistant built with Flask, PostgreSQL, Docker, and vanilla JS."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["error::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "RUF"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+extend-exclude = "migrations"

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+  <h1 class="hero-title">Your AI pair programmer, ready when you are.</h1>
+  <p class="hero-subtitle">
+    AI Code Assistant helps you write, review, and understand code faster.
+    This is the foundation — authentication, infrastructure, and a solid base
+    for the intelligence to come.
+  </p>
+  <div class="hero-actions">
+    {% if current_user.is_authenticated %}
+      <a class="btn btn-primary" href="{{ url_for('auth.me') }}">Open your account</a>
+    {% else %}
+      <a class="btn btn-primary" href="{{ url_for('auth.register') }}">Get started</a>
+      <a class="btn btn-ghost" href="{{ url_for('auth.login') }}">Log in</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="feature-grid">
+  <article class="feature-card">
+    <span class="feature-icon">&#128221;</span>
+    <h3>Account security</h3>
+    <p>Hashed passwords, session management, and CSRF protection baked in from day one.</p>
+  </article>
+  <article class="feature-card">
+    <span class="feature-icon">&#128451;</span>
+    <h3>Database-first</h3>
+    <p>PostgreSQL-backed models with migrations, so schema evolves cleanly with the product.</p>
+  </article>
+  <article class="feature-card">
+    <span class="feature-icon">&#128640;</span>
+    <h3>Deployable today</h3>
+    <p>Dockerized application with CI pipelines, health checks, and production-ready config.</p>
+  </article>
+</section>
+{% endblock %}

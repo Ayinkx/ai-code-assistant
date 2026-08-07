@@ -1,0 +1,10 @@
+# Normalize line endings across platforms.
+* text=auto
+
+# Shell scripts must stay LF even on Windows checkouts.
+*.sh text eol=lf
+
+# Binary assets.
+*.png binary
+*.jpg binary
+*.ico binary

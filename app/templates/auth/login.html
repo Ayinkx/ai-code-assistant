@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-card">
+  <h1 class="auth-title">Log in</h1>
+  <p class="auth-subtitle">Welcome back. Enter your credentials to continue.</p>
+
+  {% if error %}
+    <div class="flash flash-error">{{ error }}</div>
+  {% endif %}
+
+  <form method="POST" class="auth-form" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required autofocus
+             value="{{ request.form.get('email', '') }}" autocomplete="email">
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required
+             autocomplete="current-password">
+    </div>
+
+    <label class="checkbox">
+      <input type="checkbox" name="remember">
+      <span>Keep me logged in</span>
+    </label>
+
+    <button type="submit" class="btn btn-primary btn-block">Log in</button>
+  </form>
+
+  <p class="auth-alt">New here? <a href="{{ url_for('auth.register') }}">Create an account</a>.</p>
+</div>
+{% endblock %}

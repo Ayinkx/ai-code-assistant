@@ -1,0 +1,58 @@
+# Development and production orchestration for AI Code Assistant.
+#
+# Usage:
+#   docker compose up --build        # start web + postgres
+#   docker compose down              # stop everything
+#
+# The web service applies pending migrations before starting gunicorn.
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aica-web
+    env_file:
+      - .env
+    environment:
+      APP_ENV: production
+      SECRET_KEY: ${SECRET_KEY:-insecure-dev-secret-change-me}
+      DATABASE_URL: postgresql://aica:aica_secret@db:5432/aica
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./migrations:/app/migrations:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "flask db upgrade &&
+             gunicorn --bind 0.0.0.0:5000 --workers 3 --timeout 120 wsgi:app"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  db:
+    image: postgres:16-alpine
+    container_name: aica-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aica}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aica_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-aica}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aica} -d ${POSTGRES_DB:-aica}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

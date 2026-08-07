@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-card">
+  <h1 class="auth-title">Your account</h1>
+  <p class="auth-subtitle">Authentication scaffolding is working. More account features arrive in later phases.</p>
+
+  <dl class="account-details">
+    <dt>Username</dt>
+    <dd>{{ current_user.username }}</dd>
+    <dt>Email</dt>
+    <dd>{{ current_user.email }}</dd>
+    <dt>Member since</dt>
+    <dd>{{ current_user.created_at.strftime('%B %d, %Y') if current_user.created_at else '—' }}</dd>
+    <dt>Last login</dt>
+    <dd>{{ current_user.last_login_at.strftime('%B %d, %Y %H:%M') if current_user.last_login_at else '—' }}</dd>
+  </dl>
+</div>
+{% endblock %}
