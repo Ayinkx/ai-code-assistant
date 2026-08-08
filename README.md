@@ -17,12 +17,14 @@ incrementally across phases:
 - **Phase 5** — AI Workspaces & Project Intelligence: workspace CRUD, project
   import (GitHub or archive upload), lazy file explorer, project-wide search,
   AI project chat and analyses, and a project health dashboard.
-- **Phase 6** — Collaboration & Quality Tooling: AI code review for pull
-  requests and projects (quality, security, tests), structured findings with
-  `[CONFIRMED]`/`[SUGGESTION]` labels, review history and configuration, a
-  quality dashboard with metrics, and workspace member foundations.
+- **Phase 6** — Collaboration, AI Code Review & Quality Tooling: AI code
+  review for pull requests and projects (quality, security, tests), structured
+  findings with `[CONFIRMED]`/`[SUGGESTION]` labels, review history and
+  configuration, a quality dashboard with metrics, and workspace member
+  foundations.
 
-> **Status:** Phase 6 — AI code review and quality tooling implemented.
+> **Status:** Phase 6 — Collaboration, AI Code Review & Quality Tooling
+> implemented.
 
 ## Table of contents
 
@@ -153,7 +155,7 @@ incrementally across phases:
 - **Health dashboard** — per-project stats: file/searchable/test/doc counts,
   languages, dependency count, manifests, and indexing duration.
 
-### Phase 6 — Collaboration & quality tooling
+### Phase 6 — Collaboration, AI code review & quality tooling
 
 - **AI PR code review** — review an open pull request on a connected GitHub
   repository. Context is *bounded* (at most `REVIEW_MAX_FILES` changed files
@@ -202,7 +204,7 @@ incrementally across phases:
 ├── app/
 │   ├── auth/              # Authentication blueprint (register/login/logout)
 │   ├── chat/              # Chat blueprint (conversations, SSE streaming)
-│   ├── github/            # GitHub blueprint (OAuth, repo browser, issues, PRs)
+│   ├── github/            # GitHub blueprint (OAuth, repo browser, issues, PRs) (Phase 4)
 │   ├── main/              # Public routes, landing page, health check
 │   ├── models/            # SQLAlchemy models (User, GithubAccount, ...)
 │   ├── prompts/           # Prompt library blueprint (CRUD, search, favorites)
@@ -356,10 +358,32 @@ GitHub Actions runs on every push to `main` and on pull requests:
 
 ## Roadmap
 
-Planned phases (tracked as GitHub issues):
+Phases are built incrementally and tracked as GitHub issues and milestones.
 
-- **Phase 7** — Collaboration and workflow automation (workspace member access
-  delegation, sharing, and more).
+### Completed
+
+- **Phase 1** — Application Foundation: Flask application factory,
+  PostgreSQL-backed models, Dockerized deployment, CI pipelines, and a test
+  suite. ✔
+- **Phase 2** — Authentication & User Management: registration, login, logout,
+  password hashing, and account management. ✔
+- **Phase 3** — AI Core Features: chat interface with streaming responses,
+  prompt library, AI code generation and analysis tools, file upload, and
+  conversation management. ✔
+- **Phase 4** — GitHub Integration & Repository Intelligence: OAuth connection,
+  repository browser, commit history, issues and pull requests with AI
+  analysis, and encrypted token storage. ✔
+- **Phase 5** — AI Workspaces & Project Intelligence: workspace CRUD, project
+  import (GitHub or archive upload), lazy file explorer, project-wide search,
+  AI project chat and analyses, and a project health dashboard. ✔
+- **Phase 6** — Collaboration, AI Code Review & Quality Tooling: AI code review
+  for pull requests and projects, structured findings, review history and
+  configuration, a quality dashboard, and workspace member foundations. ✔
+
+### Planned
+
+- **Phase 7** — Collaboration and workflow automation: workspace member access
+  delegation, sharing, notifications, and activity feeds.
 
 ## License
 
