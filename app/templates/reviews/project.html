@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Project Reviews - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="github-header" data-project-id="{{ project_id }}">
+  <div>
+    <h1><a class="repo-breadcrumb" href="{{ url_for('workspaces.index') }}">Workspaces</a> / Project #{{ project_id }} / Reviews</h1>
+    <p class="repo-meta">Run AI quality, security, and test reviews against the imported project.</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('reviews.project_config_page', project_id=project_id) }}">Review settings</a>
+</div>
+
+<div class="metrics-strip" id="metrics-strip">
+  <p class="sidebar-empty">Loading quality metrics...</p>
+</div>
+
+<div class="analyze-panel review-run-panel">
+  <h3>Run a review</h3>
+  <p class="field-hint">Reviews read your indexed files and return structured findings; they never modify the project.</p>
+  <div class="review-run-buttons">
+    <button class="btn btn-primary" type="button" data-kind="quality">Quality review</button>
+    <button class="btn btn-primary" type="button" data-kind="security">Security review</button>
+    <button class="btn btn-primary" type="button" data-kind="tests">Tests review</button>
+  </div>
+  <div id="run-status" hidden></div>
+</div>
+
+<div id="review-list" class="issue-list"><p class="sidebar-empty">Loading project reviews...</p></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/github.js') }}"></script>
+<script src="{{ url_for('static', filename='js/reviews.js') }}"></script>
+{% endblock %}

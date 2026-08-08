@@ -68,6 +68,18 @@ class Project(db.Model):
         cascade="all, delete-orphan",
         order_by="ProjectMessage.created_at",
     )
+    reviews = db.relationship(
+        "Review",
+        back_populates="project",
+        cascade="all, delete-orphan",
+        order_by="Review.created_at",
+    )
+    review_config = db.relationship(
+        "ReviewConfig",
+        back_populates="project",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
 
     def to_dict(self) -> dict:
         """Serialize project metadata for JSON API responses."""

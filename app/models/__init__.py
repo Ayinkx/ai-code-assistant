@@ -11,8 +11,12 @@ from app.models.project import Project
 from app.models.project_file import ProjectFile
 from app.models.project_message import ProjectMessage
 from app.models.prompt import Prompt
+from app.models.review import Review
+from app.models.review_config import ReviewConfig
+from app.models.review_finding import ReviewFinding
 from app.models.user import User
 from app.models.workspace import Workspace
+from app.models.workspace_member import WorkspaceMember
 
 __all__ = [
     "Conversation",
@@ -22,6 +26,10 @@ __all__ = [
     "ProjectFile",
     "ProjectMessage",
     "Prompt",
+    "Review",
+    "ReviewConfig",
+    "ReviewFinding",
     "User",
     "Workspace",
+    "WorkspaceMember",
 ]

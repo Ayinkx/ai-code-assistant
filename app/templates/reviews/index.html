@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Reviews - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="github-header">
+  <div>
+    <h1>Reviews</h1>
+    <p class="repo-meta">AI code reviews of pull requests and projects, with structured findings and a quality dashboard.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('workspaces.index') }}">Open a project</a>
+</div>
+
+<div class="metrics-strip" id="metrics-strip">
+  <p class="sidebar-empty">Loading quality metrics...</p>
+</div>
+
+<div id="review-list" class="issue-list"><p class="sidebar-empty">Loading reviews...</p></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/github.js') }}"></script>
+<script src="{{ url_for('static', filename='js/reviews.js') }}"></script>
+{% endblock %}

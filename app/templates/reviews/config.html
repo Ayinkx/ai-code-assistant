@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Review Settings - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="github-header" data-project-id="{{ project_id }}">
+  <div>
+    <h1><a class="repo-breadcrumb" href="{{ url_for('reviews.project_page', project_id=project_id) }}">Project Reviews</a> / Settings</h1>
+    <p class="repo-meta">Control which reviews run for this project and how much context they use.</p>
+  </div>
+</div>
+
+<div class="prompt-editor-panel">
+  <div class="config-form">
+    <label class="field-hint" for="cfg-enabled">Enable reviews</label>
+    <select id="cfg-enabled" class="prompt-filter">
+      <option value="1">Enabled</option>
+      <option value="0">Disabled</option>
+    </select>
+
+    <label class="field-hint" for="cfg-kinds">Enabled review kinds</label>
+    <div class="check-group" id="cfg-kinds">
+      <label><input type="checkbox" value="quality"> Quality</label>
+      <label><input type="checkbox" value="security"> Security</label>
+      <label><input type="checkbox" value="tests"> Tests</label>
+    </div>
+
+    <label class="field-hint" for="cfg-severity">Minimum finding severity</label>
+    <select id="cfg-severity" class="prompt-filter">
+      <option value="critical">Critical</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+      <option value="informational">Informational</option>
+    </select>
+
+    <label class="field-hint" for="cfg-languages">File extensions to review (comma separated, empty = all)</label>
+    <input id="cfg-languages" class="field-input" type="text" maxlength="500" placeholder="py, js, ts">
+
+    <div class="check-group">
+      <label><input id="cfg-security-focus" type="checkbox"> Emphasize security</label>
+      <label><input id="cfg-performance-focus" type="checkbox"> Emphasize performance</label>
+      <label><input id="cfg-testing-focus" type="checkbox"> Emphasize testing</label>
+    </div>
+
+    <label class="field-hint" for="cfg-max-files">Max files per review</label>
+    <input id="cfg-max-files" class="field-input" type="number" min="1" max="200">
+
+    <label class="field-hint" for="cfg-max-context">Max context characters</label>
+    <input id="cfg-max-context" class="field-input" type="number" min="2000" max="200000">
+
+    <div class="prompt-editor-actions">
+      <button id="save-config" class="btn btn-primary" type="button">Save settings</button>
+      <span class="field-hint" id="save-status"></span>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/github.js') }}"></script>
+<script src="{{ url_for('static', filename='js/reviews.js') }}"></script>
+{% endblock %}

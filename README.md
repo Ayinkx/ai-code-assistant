@@ -17,8 +17,12 @@ incrementally across phases:
 - **Phase 5** — AI Workspaces & Project Intelligence: workspace CRUD, project
   import (GitHub or archive upload), lazy file explorer, project-wide search,
   AI project chat and analyses, and a project health dashboard.
+- **Phase 6** — Collaboration & Quality Tooling: AI code review for pull
+  requests and projects (quality, security, tests), structured findings with
+  `[CONFIRMED]`/`[SUGGESTION]` labels, review history and configuration, a
+  quality dashboard with metrics, and workspace member foundations.
 
-> **Status:** Phase 5 — Workspaces and project intelligence implemented.
+> **Status:** Phase 6 — AI code review and quality tooling implemented.
 
 ## Table of contents
 
@@ -149,6 +153,33 @@ incrementally across phases:
 - **Health dashboard** — per-project stats: file/searchable/test/doc counts,
   languages, dependency count, manifests, and indexing duration.
 
+### Phase 6 — Collaboration & quality tooling
+
+- **AI PR code review** — review an open pull request on a connected GitHub
+  repository. Context is *bounded* (at most `REVIEW_MAX_FILES` changed files
+  and `REVIEW_MAX_CONTEXT_CHARS` of diff text, with an optional language
+  filter), and review runs never merge, close, approve, or otherwise modify
+  the PR.
+- **Structured findings** — every review returns findings with severity,
+  category, confidence, and a file/line location (never raw repository
+  content). Findings are labeled `[CONFIRMED]` (supported by the code) versus
+  `[SUGGESTION]` (inference), and project reviews drop findings below the
+  configured `REVIEW_SEVERITY_THRESHOLD`.
+- **Project reviews** — run quality, security, and test-analysis reviews over
+  an imported project; repository content is explicitly framed as untrusted
+  data in the prompt to resist prompt injection.
+- **Review history & configuration** — per-project review history with a
+  config snapshot on each run, and per-project review configuration (kinds,
+  threshold, languages, focus areas, bounds). All review routes are
+  owner-scoped.
+- **Quality dashboard** — aggregate metrics (review counts by status/source,
+  findings by severity/category, addressed state, recent activity) computed
+  strictly from stored review rows — never fabricated.
+- **Workspace members** — `WorkspaceMember` model with
+  owner/contributor/viewer roles and owner-scoped membership APIs (role
+  assignment and removal); member-level access delegation is a planned
+  follow-up.
+
 ## Tech stack
 
 | Layer        | Technology                                        |
@@ -175,7 +206,8 @@ incrementally across phases:
 │   ├── main/              # Public routes, landing page, health check
 │   ├── models/            # SQLAlchemy models (User, GithubAccount, ...)
 │   ├── prompts/           # Prompt library blueprint (CRUD, search, favorites)
-│   ├── services/          # Service layer (LLM providers, GitHub API, crypto, import/search/analysis)
+│   ├── reviews/           # AI code review blueprint (Phase 6)
+│   ├── services/          # Service layer (LLM providers, GitHub API, crypto, import/search/analysis/metrics)
 │   ├── static/            # CSS and JavaScript assets
 │   ├── templates/         # Jinja2 templates (pages + error pages)
 │   ├── tools/             # AI tools blueprint (generate, analyze, actions)
@@ -299,6 +331,11 @@ All configuration is environment-driven (see `.env.example`):
 | `PROJECT_GITHUB_MAX_FILES` | `1000`   | Max file contents fetched per GitHub import |
 | `PROJECT_SKIP_DIRS`    | `.git,node_modules,…` | Directory basenames skipped on import |
 | `PROJECT_SKIP_SECRET_FILES` | `.env,.pem,…` | File names/prefixes skipped on import |
+| `REVIEW_MAX_FILES`     | `40`        | Max changed files analyzed in one review |
+| `REVIEW_MAX_CONTEXT_CHARS` | `40000` | Max diff/repo context sent to the LLM per review |
+| `REVIEW_MAX_FINDINGS`  | `100`       | Max findings stored per review |
+| `REVIEW_KINDS`         | `quality,security,tests` | Default project review kinds |
+| `REVIEW_SEVERITY_THRESHOLD` | `low` | Min finding severity stored for project reviews |
 
 The production configuration fails fast at startup if `SECRET_KEY` or a
 PostgreSQL `DATABASE_URL` is missing — it will never silently run with
@@ -321,7 +358,8 @@ GitHub Actions runs on every push to `main` and on pull requests:
 
 Planned phases (tracked as GitHub issues):
 
-- **Phase 6** — Real-time collaboration, code review, and quality tooling.
+- **Phase 7** — Collaboration and workflow automation (workspace member access
+  delegation, sharing, and more).
 
 ## License
 

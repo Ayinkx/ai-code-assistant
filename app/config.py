@@ -93,6 +93,17 @@ class Config:
         ".npmrc,.pypirc,secrets.yaml,secret.yaml,secret.yml",
     )
 
+    # AI reviews (Phase 6): caps that keep reviews bounded and predictable.
+    # A review never sends more than REVIEW_MAX_CONTEXT_CHARS of repository text
+    # to the model, and never analyzes more than REVIEW_MAX_FILES changed files.
+    REVIEW_MAX_FILES = int(os.getenv("REVIEW_MAX_FILES", "40"))
+    REVIEW_MAX_CONTEXT_CHARS = int(os.getenv("REVIEW_MAX_CONTEXT_CHARS", "40000"))
+    REVIEW_MAX_FINDINGS = int(os.getenv("REVIEW_MAX_FINDINGS", "100"))
+    # Default enabled project review kinds (comma-separated).
+    REVIEW_KINDS = os.getenv("REVIEW_KINDS", "quality,security,tests")
+    # Only findings at or above this severity are stored: critical|high|medium|low|informational.
+    REVIEW_SEVERITY_THRESHOLD = os.getenv("REVIEW_SEVERITY_THRESHOLD", "low")
+
 
 class DevelopmentConfig(Config):
     """Local development configuration."""

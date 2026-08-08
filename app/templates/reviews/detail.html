@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Review #{{ review_id }} - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="github-header" data-review-id="{{ review_id }}">
+  <div>
+    <h1><a class="repo-breadcrumb" href="{{ url_for('reviews.index') }}">Reviews</a> / #{{ review_id }}</h1>
+    <div class="repo-toolbar">
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('reviews.index') }}">&larr; All reviews</a>
+      <button id="delete-review" class="btn btn-danger btn-sm" type="button">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="review-detail" class="issue-detail"><p class="sidebar-empty">Loading review...</p></div>
+
+<div class="analysis-panel">
+  <h3>Findings</h3>
+  <div class="finding-filters">
+    <select id="finding-severity" class="prompt-filter">
+      <option value="">All severities</option>
+      <option value="critical">Critical</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+      <option value="informational">Informational</option>
+    </select>
+    <select id="finding-confidence" class="prompt-filter">
+      <option value="">All confidence</option>
+      <option value="confirmed">Confirmed</option>
+      <option value="potential">Potential</option>
+      <option value="suggestion">Suggestion</option>
+    </select>
+    <select id="finding-addressed" class="prompt-filter">
+      <option value="">All status</option>
+      <option value="0">Open</option>
+      <option value="1">Addressed</option>
+    </select>
+    <span class="field-hint" id="finding-count"></span>
+  </div>
+  <div id="finding-list" class="issue-list"><p class="sidebar-empty">Loading findings...</p></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/github.js') }}"></script>
+<script src="{{ url_for('static', filename='js/reviews.js') }}"></script>
+{% endblock %}

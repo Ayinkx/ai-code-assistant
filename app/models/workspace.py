@@ -38,6 +38,12 @@ class Workspace(db.Model):
         cascade="all, delete-orphan",
         order_by="Project.created_at",
     )
+    members = db.relationship(
+        "WorkspaceMember",
+        back_populates="workspace",
+        cascade="all, delete-orphan",
+        order_by="WorkspaceMember.created_at",
+    )
 
     def to_dict(self) -> dict:
         """Serialize the workspace for JSON API responses."""

@@ -20,6 +20,8 @@ API (JSON, all scoped to the current user)
     /workspaces/api/projects/<pid>/chat              AI project chat
     /workspaces/api/projects/<pid>/chat/stream       AI project chat (SSE)
     /workspaces/api/projects/<pid>/analyze           project analysis
+    /workspaces/api/workspaces/<id>/members          list / add members (owner)
+    /workspaces/api/workspaces/<id>/members/<uid>    update role / remove member (owner)
 """
 
 import json
@@ -30,8 +32,9 @@ from flask import Response, jsonify, render_template, request
 from flask_login import current_user, login_required
 
 from app.extensions import db
-from app.models import Project, ProjectMessage, Workspace
+from app.models import Project, ProjectMessage, User, Workspace, WorkspaceMember
 from app.models.project import SOURCE_ARCHIVE, SOURCE_GITHUB, STATUS_READY
+from app.models.workspace_member import ROLE_OWNER, ROLE_VIEWER, VALID_ROLES
 from app.services import project_analysis
 from app.services.github import (
     GitHubError,
@@ -58,6 +61,22 @@ def _get_workspace(workspace_id: int) -> Workspace:
 
 def _get_project(project_id: int) -> Project:
     return Project.query.filter_by(id=project_id, user_id=current_user.id).first_or_404()
+
+
+def _member_role(workspace_id: int) -> str | None:
+    """Return the current user's role in the workspace, or ``None``."""
+    if Workspace.query.filter_by(id=workspace_id, user_id=current_user.id).first() is not None:
+        return ROLE_OWNER
+    membership = WorkspaceMember.query.filter_by(
+        workspace_id=workspace_id, user_id=current_user.id
+    ).first()
+    return membership.role if membership else None
+
+
+def _get_membership(workspace_id: int, user_id: int) -> WorkspaceMember:
+    return WorkspaceMember.query.filter_by(
+        workspace_id=workspace_id, user_id=user_id
+    ).first_or_404()
 
 
 def _validate_project_path(path: str) -> str:
@@ -157,6 +176,70 @@ def api_update_workspace(workspace_id: int):
 def api_delete_workspace(workspace_id: int):
     workspace = _get_workspace(workspace_id)
     db.session.delete(workspace)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+# --------------------------------------------------------------------------
+# API: workspace members (owner only)
+# --------------------------------------------------------------------------
+
+
+@bp.route("/api/workspaces/<int:workspace_id>/members", methods=["GET"])
+@login_required
+def api_list_members(workspace_id: int):
+    _get_workspace(workspace_id)
+    members = WorkspaceMember.query.filter_by(workspace_id=workspace_id).order_by(
+        WorkspaceMember.created_at
+    )
+    return jsonify([m.to_dict() for m in members])
+
+
+@bp.route("/api/workspaces/<int:workspace_id>/members", methods=["POST"])
+@login_required
+def api_add_member(workspace_id: int):
+    _get_workspace(workspace_id)
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    role = (data.get("role") or ROLE_VIEWER).strip().lower()
+    if not username:
+        return jsonify({"error": "A username is required."}), 400
+    if role not in VALID_ROLES or role == ROLE_OWNER:
+        return jsonify({"error": "Invalid role."}), 400
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        return jsonify({"error": "No user with that username exists."}), 404
+    if user.id == current_user.id:
+        return jsonify({"error": "The owner is already a member."}), 400
+    existing = WorkspaceMember.query.filter_by(workspace_id=workspace_id, user_id=user.id).first()
+    if existing:
+        return jsonify({"error": "That user is already a member."}), 409
+    membership = WorkspaceMember(workspace_id=workspace_id, user_id=user.id, role=role)
+    db.session.add(membership)
+    db.session.commit()
+    return jsonify(membership.to_dict()), 201
+
+
+@bp.route("/api/workspaces/<int:workspace_id>/members/<int:user_id>", methods=["PATCH"])
+@login_required
+def api_update_member(workspace_id: int, user_id: int):
+    _get_workspace(workspace_id)
+    membership = _get_membership(workspace_id, user_id)
+    data = request.get_json(silent=True) or {}
+    role = (data.get("role") or "").strip().lower()
+    if role not in VALID_ROLES or role == ROLE_OWNER:
+        return jsonify({"error": "Invalid role."}), 400
+    membership.role = role
+    db.session.commit()
+    return jsonify(membership.to_dict())
+
+
+@bp.route("/api/workspaces/<int:workspace_id>/members/<int:user_id>", methods=["DELETE"])
+@login_required
+def api_remove_member(workspace_id: int, user_id: int):
+    _get_workspace(workspace_id)
+    membership = _get_membership(workspace_id, user_id)
+    db.session.delete(membership)
     db.session.commit()
     return jsonify({"ok": True})
 

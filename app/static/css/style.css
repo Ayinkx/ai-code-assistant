@@ -1585,3 +1585,143 @@ a:hover {
     max-height: 40vh;
   }
 }
+
+/* ============================================================
+   Phase 6: AI code reviews
+   ============================================================ */
+
+.metrics-strip {
+  margin-bottom: 18px;
+}
+
+.badge-severity-critical,
+.badge-severity-high,
+.badge-severity-medium,
+.badge-severity-low,
+.badge-severity-informational {
+  font-weight: 600;
+}
+
+.badge-severity-critical {
+  background: var(--danger, #e5484d);
+  color: #fff;
+}
+
+.badge-severity-high {
+  background: #d97706;
+  color: #fff;
+}
+
+.badge-severity-medium {
+  background: #ca8a04;
+  color: #fff;
+}
+
+.badge-severity-low {
+  background: var(--accent, #58a6ff);
+  color: #fff;
+}
+
+.badge-severity-informational {
+  background: var(--text-muted, #8b949e);
+  color: #fff;
+}
+
+.issue-item {
+  display: block;
+  padding: 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.issue-item:hover {
+  background: var(--bg-elevated);
+}
+
+.issue-item-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.issue-item-sub {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.finding-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.finding-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.finding-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.finding-location {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.finding-confidence {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+}
+
+.finding-recommendation {
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.review-run-panel {
+  margin-bottom: 18px;
+}
+
+.review-run-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.check-group {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 4px 0 12px;
+}
+
+.check-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 560px;
+}
+
+.config-form .prompt-filter,
+.config-form .field-input {
+  margin-bottom: 12px;
+}
+

@@ -22,7 +22,17 @@ except ImportError:  # pragma: no cover - runtime fallback
     tomllib = None  # type: ignore[assignment]
 
 MAX_CONTEXT_FILES = 10
-ANALYSIS_KINDS = ("architecture", "bugs", "refactor", "tests", "docs", "dependencies")
+ANALYSIS_KINDS = (
+    "architecture",
+    "bugs",
+    "refactor",
+    "tests",
+    "docs",
+    "dependencies",
+    "quality",
+    "security",
+    "code_review",
+)
 
 _PROJECT_SYSTEM = (
     "You are an expert software engineering analyst working on an imported "
@@ -563,6 +573,12 @@ Produce concise, accurate documentation for this project: an overview, setup
 instructions, usage examples, and a short API/CLI reference where applicable.
 Base everything on the files shown and mark [CONFIRMED] vs [SUGGESTION].
 """
+    elif kind == "quality":
+        return analyze_code_quality(project)
+    elif kind == "security":
+        return analyze_security(project)
+    elif kind == "code_review":
+        return analyze_code_review(project)
     else:  # dependencies
         inventory = dependency_inventory(project)
         if inventory:
@@ -590,6 +606,76 @@ be directly supported by the inventory.
                 "State that clearly and do not fabricate a dependency list."
             )
 
+    return {"kind": kind, "analysis": _run(prompt)}
+
+
+def analyze_code_quality(project) -> dict:
+    """Analyze the project's code quality (complexity, maintainability)."""
+    kind = "quality"
+    structure = project_structure(project)
+    source = _source_files(project)
+    blocks = _bounded_blocks(source, _budget())
+    prompt = f"""Project: {project.name}
+
+Structure (sample):
+{_clip(structure, 6000)}
+
+Source files under review:
+{blocks or "(no source file contents retrieved)"}
+
+Analyze code quality: excessive complexity, long functions, duplication, weak
+error handling, dead code, and inconsistent patterns. Every finding must be
+tied to a concrete, evidence-based maintainability concern visible in the
+files; do not flag code purely for differing style. Mark [CONFIRMED] for
+definite issues and [SUGGESTION] for judgment calls.
+"""
+    return {"kind": kind, "analysis": _run(prompt)}
+
+
+def analyze_security(project) -> dict:
+    """Analyze the project for concrete, evidence-based security risks."""
+    kind = "security"
+    structure = project_structure(project)
+    source = _source_files(project)
+    blocks = _bounded_blocks(source, _budget())
+    prompt = f"""Project: {project.name}
+
+Structure (sample):
+{_clip(structure, 6000)}
+
+Source files under review:
+{blocks or "(no source file contents retrieved)"}
+
+Perform a security analysis. Look only for real, evidence-based risks:
+authentication, authorization, input validation, file access, hard-coded
+secrets, injection, sensitive-information exposure, and insecure
+configuration. Do NOT invent vulnerabilities, CVEs, or advisory data; if a
+category shows no evidence, do not report it. Dependency concerns that would
+require a registry source must be marked [SUGGESTION] with a recommendation
+to verify. Mark [CONFIRMED] for issues directly proven by the files.
+"""
+    return {"kind": kind, "analysis": _run(prompt)}
+
+
+def analyze_code_review(project) -> dict:
+    """Produce a pull-request-style review of the project's recent code."""
+    kind = "code_review"
+    structure = project_structure(project)
+    source = _source_files(project)
+    blocks = _bounded_blocks(source, _budget())
+    prompt = f"""Project: {project.name}
+
+Structure (sample):
+{_clip(structure, 6000)}
+
+Source files under review:
+{blocks or "(no source file contents retrieved)"}
+
+Review this code as if for a pull request. Identify concrete bugs, security
+issues, missing tests, and maintainability problems with the specific file and
+line where relevant, and a suggested fix for each. Mark [CONFIRMED] for issues
+proven by the files and [SUGGESTION] for possible issues.
+"""
     return {"kind": kind, "analysis": _run(prompt)}
 
 
