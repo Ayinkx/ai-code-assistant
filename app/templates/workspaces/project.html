@@ -35,6 +35,7 @@
       <button class="repo-tab" data-tab="chat" type="button">AI Chat</button>
       <button class="repo-tab" data-tab="analysis" type="button">Analysis</button>
       <button class="repo-tab" data-tab="stats" type="button">Stats</button>
+      <button class="repo-tab" data-tab="discussion" type="button">Discussion</button>
     </div>
 
     <div id="tab-files" class="project-tab">
@@ -82,6 +83,19 @@
 
     <div id="tab-stats" class="project-tab" hidden>
       <div id="stats-output" class="analysis-output"><p class="sidebar-empty">Loading project health...</p></div>
+    </div>
+
+    <div id="tab-discussion" class="project-tab" hidden>
+      <p class="field-hint">Discuss this project with your team. Mention a teammate with @username to notify them.</p>
+      <div id="comment-list" class="project-list">
+        <p class="sidebar-empty">Loading discussion...</p>
+      </div>
+      <div class="chat-composer" style="margin-top: 12px;">
+        <textarea id="comment-input" rows="3" placeholder="Add a comment... @username to mention a teammate"></textarea>
+        <div class="composer-actions">
+          <button id="comment-send" class="btn btn-primary" type="button">Comment</button>
+        </div>
+      </div>
     </div>
   </section>
 </div>

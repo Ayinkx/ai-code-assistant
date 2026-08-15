@@ -49,7 +49,13 @@ class TestMemberManagement:
 
         response = client.delete(f"/workspaces/api/workspaces/{workspace.id}/members/{member.id}")
         assert response.status_code == 200
-        assert WorkspaceMember.query.count() == 0
+        # Removal is a soft-delete that preserves membership history (#135):
+        # the row is retained with status "removed" and excluded from listings.
+        row = WorkspaceMember.query.filter_by(workspace_id=workspace.id, user_id=member.id).one()
+        assert row.status == "removed"
+        assert row.removed_at is not None
+        response = client.get(f"/workspaces/api/workspaces/{workspace.id}/members")
+        assert response.get_json() == []
 
     def test_add_unknown_user(self, client, make_user, login):
         make_user(username="owner", email="owner@example.com")

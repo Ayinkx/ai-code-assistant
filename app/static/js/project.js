@@ -138,11 +138,12 @@
     document.querySelectorAll("#project-tabs .repo-tab").forEach(function (tab) {
       tab.classList.toggle("active", tab.dataset.tab === name);
     });
-    ["files", "search", "chat", "analysis", "stats"].forEach(function (key) {
+    ["files", "search", "chat", "analysis", "stats", "discussion"].forEach(function (key) {
       document.getElementById("tab-" + key).hidden = key !== name;
     });
     if (name === "chat" && !chatLoaded) loadChatHistory();
     if (name === "stats") loadStats();
+    if (name === "discussion") loadComments();
   }
 
   // ------------------------------------------------------------------ tree
@@ -468,7 +469,73 @@
 
   function metric(label, value) {
     return '<div class="metric-card"><span class="metric-value">' + escapeHtml(value) +
-      '</span><span class="metric-label">' + escapeHtml(label) + "</span></div>";
+      '</span><span class="metric-label">' + escapeHtml(label) + "</div>";
+  }
+
+  // ------------------------------------------------------------ discussion
+
+  var commentsLoaded = false;
+
+  function formatCommentTime(iso) {
+    if (!iso) return "";
+    return new Date(iso).toLocaleString();
+  }
+
+  function loadComments() {
+    var list = document.getElementById("comment-list");
+    if (commentsLoaded) return;
+    api("/workspaces/api/projects/" + PROJECT_ID + "/comments?per_page=100")
+      .then(function (data) {
+        commentsLoaded = true;
+        if (!data.items.length) {
+          list.innerHTML = '<p class="sidebar-empty">No comments yet. Start the discussion.</p>';
+          return;
+        }
+        var html = "";
+        data.items.forEach(function (comment) {
+          html +=
+            '<div class="notification-row">' +
+            '<div class="notification-info">' +
+            "<div>" +
+            '<div class="notification-title">' + escapeHtml(comment.author_username || "deleted user") + "</div>" +
+            '<div class="notification-meta">' + formatCommentTime(comment.created_at) + "</div>" +
+            '<div style="margin-top:6px;">' + renderInline(comment.content) + "</div>" +
+            "</div>" +
+            "</div>" +
+            "</div>";
+        });
+        list.innerHTML = html;
+      })
+      .catch(function (error) {
+        list.innerHTML = '<p class="sidebar-empty">' + escapeHtml(error.message) + "</p>";
+      });
+  }
+
+  function postComment() {
+    var input = document.getElementById("comment-input");
+    var btn = document.getElementById("comment-send");
+    var content = input.value.trim();
+    if (!content) {
+      input.focus();
+      return;
+    }
+    btn.disabled = true;
+    api("/workspaces/api/projects/" + PROJECT_ID + "/comments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: content }),
+    })
+      .then(function () {
+        input.value = "";
+        commentsLoaded = false;
+        loadComments();
+      })
+      .catch(function (error) {
+        flashError(error.message);
+      })
+      .then(function () {
+        btn.disabled = false;
+      });
   }
 
   // ----------------------------------------------------------------- init
@@ -516,6 +583,14 @@
         });
         runAnalysis(btn.dataset.kind);
       });
+    });
+
+    document.getElementById("comment-send").addEventListener("click", postComment);
+    document.getElementById("comment-input").addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        postComment();
+      }
     });
 
     document.getElementById("delete-project").addEventListener("click", function () {

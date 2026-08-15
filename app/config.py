@@ -104,6 +104,26 @@ class Config:
     # Only findings at or above this severity are stored: critical|high|medium|low|informational.
     REVIEW_SEVERITY_THRESHOLD = os.getenv("REVIEW_SEVERITY_THRESHOLD", "low")
 
+    # Team collaboration (Phase 7).
+    # Invitation default time-to-live in hours (168 = 7 days).
+    INVITE_TTL_HOURS = int(os.getenv("INVITE_TTL_HOURS", "168"))
+    # Maximum workspace members included in AI team context (per-project chat).
+    PROJECT_MAX_MEMBER_CONTEXT = int(os.getenv("PROJECT_MAX_MEMBER_CONTEXT", "20"))
+    # In-memory rate limiting for public collaboration endpoints (accept/
+    # decline/landing) and the presence heartbeat. Simple sliding-window limiter
+    # in app/services/ratelimit.py; broader per-user AI/import limits are the
+    # scope of the umbrella issues (#28/#81/#106).
+    RATE_LIMIT_MAX = int(os.getenv("RATE_LIMIT_MAX", "30"))
+    RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "300"))
+    # Optional SMTP for invitation email delivery. When unset, invitations are
+    # delivered as in-app notifications only and the app never crashes on mail.
+    SMTP_HOST = os.getenv("SMTP_HOST", "")
+    SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", "")
+    MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "1") == "1"
+
 
 class DevelopmentConfig(Config):
     """Local development configuration."""

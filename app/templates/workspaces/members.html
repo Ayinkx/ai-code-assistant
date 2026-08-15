@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}{{ workspace.name }} Members - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="collab-header">
+  <div>
+    <h1>
+      <a class="repo-breadcrumb" href="{{ url_for('workspaces.detail', workspace_id=workspace.id) }}">{{ workspace.name }}</a>
+      / Team
+    </h1>
+    <p class="repo-meta">Owned by {{ owner.username }}. Your role: <span class="role-pill role-{{ my_role }}">{{ my_role }}</span></p>
+  </div>
+  <div class="repo-toolbar">
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('workspaces.detail', workspace_id=workspace.id) }}">Projects</a>
+    {% if my_role == 'owner' %}
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('collaboration.audit_page', workspace_id=workspace.id) }}">Audit log</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if my_role == 'owner' %}
+<div class="collab-panel">
+  <h2>Invite people</h2>
+  <p class="field-hint">Invitees receive an email with a secure join link. The raw token is only ever delivered through that email.</p>
+  <div class="collab-form-row">
+    <input id="invite-email" class="field-input" type="email" placeholder="teammate@example.com">
+    <select id="invite-role" class="field-input" style="flex: 0 0 160px;">
+      <option value="viewer">Viewer</option>
+      <option value="contributor">Contributor</option>
+    </select>
+    <button id="invite-btn" class="btn btn-primary" type="button">Send invitation</button>
+  </div>
+  <div id="invite-list" class="project-list">
+    <p class="empty-note">Loading invitations...</p>
+  </div>
+</div>
+{% endif %}
+
+<div class="collab-panel">
+  <h2>Members</h2>
+  <div id="member-list" class="project-list">
+    <p class="empty-note">Loading members...</p>
+  </div>
+</div>
+
+{% if my_role == 'owner' %}
+<div class="collab-panel settings-panel">
+  <h2>Collaboration settings</h2>
+  <div class="collab-form-row">
+    <label class="checkbox">
+      <input type="checkbox" id="invitations-enabled">
+      <span>Allow invitations to this workspace</span>
+    </label>
+    <button id="settings-save" class="btn btn-ghost btn-sm" type="button">Save settings</button>
+  </div>
+  <div class="collab-form-row">
+    <label for="default-role" class="field-hint" style="margin:0;flex:0 0 160px;">Default role</label>
+    <select id="default-role" class="field-input" style="flex: 0 0 200px;">
+      <option value="viewer">Viewer</option>
+      <option value="contributor">Contributor</option>
+    </select>
+  </div>
+</div>
+
+<div class="collab-panel">
+  <h2>Danger zone</h2>
+  <p class="field-hint">Transferring ownership makes another member the new owner; you become a contributor. There is no way to transfer back except through the new owner.</p>
+  <div class="collab-form-row">
+    <select id="transfer-select" class="field-input" style="flex: 0 0 240px;">
+      <option value="">Choose a member...</option>
+    </select>
+    <button id="transfer-btn" class="btn btn-ghost btn-sm" type="button">Transfer ownership</button>
+    <button id="leave-btn" class="btn btn-ghost btn-sm btn-danger" type="button">Leave workspace</button>
+  </div>
+</div>
+{% else %}
+<div class="collab-panel">
+  <p class="field-hint">Need a different role, or ready to leave? Contact the owner or leave this workspace.</p>
+  <button id="leave-btn" class="btn btn-ghost btn-sm btn-danger" type="button">Leave workspace</button>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.COLLAB_WORKSPACE_ID = {{ workspace.id }};
+  window.COLLAB_MY_ROLE = {{ my_role|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/members.js') }}"></script>
+{% endblock %}

@@ -11,6 +11,9 @@
 
   <form method="POST" class="auth-form" novalidate>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if next_url %}
+      <input type="hidden" name="next" value="{{ next_url }}">
+    {% endif %}
 
     <div class="field">
       <label for="username">Username</label>

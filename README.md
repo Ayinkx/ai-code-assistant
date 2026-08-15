@@ -22,9 +22,11 @@ incrementally across phases:
   findings with `[CONFIRMED]`/`[SUGGESTION]` labels, review history and
   configuration, a quality dashboard with metrics, and workspace member
   foundations.
+- **Phase 7** — Team Collaboration: workspace member lifecycle, email
+  invitations, roles and permissions, notifications, mentions, activity/audit
+  history, collaboration UI, and permission-aware AI collaboration.
 
-> **Status:** Phase 6 — Collaboration, AI Code Review & Quality Tooling
-> implemented.
+> **Status:** Phases 1–7 implemented.
 
 ## Table of contents
 
@@ -39,6 +41,13 @@ incrementally across phases:
 - [CI / CD](#ci--cd)
 - [Roadmap](#roadmap)
 - [License](#license)
+
+## Documentation
+
+- [Team collaboration guide](docs/team-collaboration.md) — feature guide,
+  roles matrix, invitation flow, FAQ, and developer guide.
+- [Collaboration API reference](docs/api-collaboration.md) — every Phase 7
+  endpoint with method, path, role requirement, params, and examples.
 
 ## Features
 
@@ -182,6 +191,30 @@ incrementally across phases:
   assignment and removal); member-level access delegation is a planned
   follow-up.
 
+### Phase 7 — Team collaboration
+
+- **Member lifecycle** — add members by username, update roles, remove
+  (soft-delete that preserves history), self-service leave, and atomic
+  ownership transfer (previous owner becomes a contributor, projects move to
+  the new owner).
+- **Email invitations** — invite registered or unregistered users with
+  one-time hashed tokens, a public landing page, accept/decline, TTL expiry,
+  owner cancellation, and per-workspace invite toggles with a default member
+  role.
+- **Roles & permissions** — central capability matrix in
+  `app/services/permissions.py`; non-members and unknown roles fail closed,
+  and inaccessible resources return uniform `404`s (no existence oracle).
+- **Activity feed & audit** — every team action is recorded in an append-only
+  event log; members see a non-audit activity feed, the owner sees the full
+  audit subset with metadata.
+- **Notifications** — per-user inbox (invitations, `@`mentions, membership,
+  role changes, AI events) with an unread badge, mark-read/read-all, and
+  per-category preferences.
+- **Project discussion** — threaded comments on projects with `@username`
+  mentions that notify active members.
+- **Permission-aware AI** — prompts carry an escaped, bounded team roster, and
+  project content access fails closed before any context is assembled.
+
 ## Tech stack
 
 | Layer        | Technology                                        |
@@ -204,6 +237,7 @@ incrementally across phases:
 ├── app/
 │   ├── auth/              # Authentication blueprint (register/login/logout)
 │   ├── chat/              # Chat blueprint (conversations, SSE streaming)
+│   ├── collaboration/     # Collaboration blueprint (invitations, notifications, comments, activity/audit, settings) (Phase 7)
 │   ├── github/            # GitHub blueprint (OAuth, repo browser, issues, PRs) (Phase 4)
 │   ├── main/              # Public routes, landing page, health check
 │   ├── models/            # SQLAlchemy models (User, GithubAccount, ...)
@@ -338,6 +372,16 @@ All configuration is environment-driven (see `.env.example`):
 | `REVIEW_MAX_FINDINGS`  | `100`       | Max findings stored per review |
 | `REVIEW_KINDS`         | `quality,security,tests` | Default project review kinds |
 | `REVIEW_SEVERITY_THRESHOLD` | `low` | Min finding severity stored for project reviews |
+| `INVITE_TTL_HOURS`     | `168`       | Invitation expiry window in hours (Phase 7) |
+| `RATE_LIMIT_MAX`       | `30`        | Max attempts per IP/window for invitation endpoints (Phase 7) |
+| `RATE_LIMIT_WINDOW_SECONDS` | `300`  | Rate-limit window in seconds (Phase 7) |
+| `SMTP_HOST`           | unset       | SMTP host for invitation emails (Phase 7) |
+| `SMTP_PORT`           | `587`       | SMTP port (Phase 7) |
+| `SMTP_USER`           | unset       | SMTP username (Phase 7) |
+| `SMTP_PASSWORD`       | unset       | SMTP password (Phase 7) |
+| `MAIL_USE_TLS`        | `true`      | Use TLS for SMTP (Phase 7) |
+| `MAIL_DEFAULT_SENDER` | unset       | From-address for outgoing email (Phase 7) |
+| `PROJECT_MAX_MEMBER_CONTEXT` | `20`  | Max workspace members included in the AI team roster (Phase 7) |
 
 The production configuration fails fast at startup if `SECRET_KEY` or a
 PostgreSQL `DATABASE_URL` is missing — it will never silently run with
@@ -379,11 +423,13 @@ Phases are built incrementally and tracked as GitHub issues and milestones.
 - **Phase 6** — Collaboration, AI Code Review & Quality Tooling: AI code review
   for pull requests and projects, structured findings, review history and
   configuration, a quality dashboard, and workspace member foundations. ✔
+- **Phase 7** — Team Collaboration: workspace member lifecycle, invitations,
+  roles and permissions, notifications, mentions, activity/audit history,
+  collaboration UI, and permission-aware AI collaboration. ✔
 
 ### Planned
 
-- **Phase 7** — Collaboration and workflow automation: workspace member access
-  delegation, sharing, notifications, and activity feeds.
+- **Phase 8** — To be defined.
 
 ## License
 

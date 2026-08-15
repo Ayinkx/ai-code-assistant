@@ -38,6 +38,7 @@ def register():
         return redirect(url_for("main.index"))
 
     error = None
+    next_url = request.form.get("next") or request.args.get("next")
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         email = request.form.get("email", "").strip().lower()
@@ -66,9 +67,11 @@ def register():
             db.session.commit()
             login_user(user)
             flash("Welcome! Your account was created successfully.", "success")
+            if next_url and _is_safe_redirect_target(next_url):
+                return redirect(next_url)
             return redirect(url_for("main.index"))
 
-    return render_template("auth/register.html", error=error)
+    return render_template("auth/register.html", error=error, next_url=next_url or "")
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -78,6 +81,7 @@ def login():
         return redirect(url_for("main.index"))
 
     error = None
+    next_url = request.form.get("next") or request.args.get("next")
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
@@ -94,12 +98,11 @@ def login():
             login_user(user, remember=remember)
             flash(f"Welcome back, {user.username}!", "success")
 
-            next_url = request.args.get("next")
             if next_url and _is_safe_redirect_target(next_url):
                 return redirect(next_url)
             return redirect(url_for("main.index"))
 
-    return render_template("auth/login.html", error=error)
+    return render_template("auth/login.html", error=error, next_url=next_url or "")
 
 
 @bp.route("/logout", methods=["POST"])

@@ -1725,3 +1725,243 @@ a:hover {
   margin-bottom: 12px;
 }
 
+
+/* ============================================================
+   Phase 7 - Team Collaboration
+   ============================================================ */
+
+.notification-badge {
+  display: inline-block;
+  min-width: 16px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--accent, #4f46e5);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.collab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.member-row,
+.invite-row,
+.notification-row,
+.activity-row,
+.audit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.15);
+  flex-wrap: wrap;
+}
+
+.member-info,
+.invite-info,
+.notification-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.member-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(127, 127, 127, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--text, #e6e6e6);
+  flex-shrink: 0;
+}
+
+.member-name,
+.invite-email,
+.notification-title {
+  font-weight: 600;
+}
+
+.member-meta,
+.invite-meta,
+.notification-meta,
+.activity-meta {
+  font-size: 12px;
+  color: var(--muted, #999);
+}
+
+.member-actions,
+.invite-actions,
+.notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.role-pill {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.role-pill.role-owner { background: rgba(79, 70, 229, 0.18); color: #a5b4fc; }
+.role-pill.role-contributor { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
+.role-pill.role-viewer { background: rgba(245, 158, 11, 0.15); color: #fcd34d; }
+
+.status-pill {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba(127, 127, 127, 0.15);
+  color: #ccc;
+}
+
+.status-pill.status-pending { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
+.status-pill.status-expired { background: rgba(245, 158, 11, 0.15); color: #fcd34d; }
+.status-pill.status-accepted { background: rgba(79, 70, 229, 0.18); color: #a5b4fc; }
+.status-pill.status-declined, .status-pill.status-cancelled { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+
+.collab-panel {
+  margin-bottom: 24px;
+}
+
+.collab-panel h2 {
+  margin-bottom: 8px;
+}
+
+.collab-panel .field-hint {
+  margin-bottom: 10px;
+}
+
+.collab-form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.collab-form-row .field-input {
+  flex: 1 1 200px;
+  margin: 0;
+}
+
+.invite-card {
+  padding: 28px;
+  max-width: 520px;
+  margin: 32px auto;
+  background: rgba(127, 127, 127, 0.06);
+  border: 1px solid rgba(127, 127, 127, 0.18);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.invite-card h1 {
+  margin: 8px 0 4px;
+}
+
+.invite-card .invite-state {
+  margin: 12px 0 20px;
+  color: var(--muted, #999);
+}
+
+.notification-row.unread {
+  background: rgba(79, 70, 229, 0.06);
+  border-radius: 8px;
+  padding: 12px 8px;
+}
+
+.notification-time,
+.activity-time,
+.audit-time {
+  font-size: 12px;
+  color: var(--muted, #999);
+  white-space: nowrap;
+}
+
+.notification-link {
+  margin-left: 8px;
+  font-size: 13px;
+}
+
+.activity-feed .activity-row,
+.audit-table .audit-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent, #4f46e5);
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+
+.activity-body,
+.audit-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.audit-row {
+  padding: 10px 0;
+}
+
+.audit-row .audit-actor {
+  font-weight: 600;
+}
+
+.audit-metadata {
+  font-size: 12px;
+  color: var(--muted, #999);
+  word-break: break-all;
+}
+
+.settings-panel label.checkbox {
+  margin-bottom: 8px;
+}
+
+.settings-panel .collab-form-row {
+  margin-bottom: 14px;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.pager button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.empty-note {
+  color: var(--muted, #999);
+  padding: 16px 4px;
+}

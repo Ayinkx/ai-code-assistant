@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Invitation{% endblock %}
+
+{% block content %}
+<div class="invite-card">
+  <p class="invite-state">
+    {% if invitation is not none %}
+      {{ invitation.inviter.username if invitation.inviter else 'Someone' }} invited you to join
+      <strong>{{ invitation.workspace.name }}</strong> as a
+      <span class="role-pill role-{{ invitation.role }}">{{ invitation.role }}</span>.
+    {% else %}
+      This invitation is not valid.
+    {% endif %}
+  </p>
+
+  {% if state == 'pending' %}
+    {% if current_user.is_authenticated %}
+      <p class="invite-state">
+        {% if current_user.email.lower() == (invitation.email or '').lower() %}
+          This invitation is addressed to your account. Accept it to join the workspace.
+        {% else %}
+          This invitation is addressed to <strong>{{ invitation.email }}</strong>, but you are
+          logged in as <strong>{{ current_user.email }}</strong>. Log in with the invited account first.
+        {% endif %}
+      </p>
+      {% if current_user.email.lower() == (invitation.email or '').lower() %}
+        <div class="collab-form-row" style="justify-content:center;">
+          <button id="accept-btn" class="btn btn-primary" type="button">Accept invitation</button>
+          <button id="decline-btn" class="btn btn-ghost" type="button">Decline</button>
+        </div>
+        <p id="invite-status" class="field-hint" hidden></p>
+      {% else %}
+        <p><a class="btn btn-primary" href="{{ url_for('auth.logout') }}">Log out</a></p>
+      {% endif %}
+    {% else %}
+      <p class="invite-state">Log in or create an account with <strong>{{ invitation.email }}</strong> to accept this invitation.</p>
+      <div class="collab-form-row" style="justify-content:center;">
+        <a class="btn btn-primary" href="{{ url_for('auth.login', next=request.full_path) }}">Log in</a>
+        <a class="btn btn-ghost" href="{{ url_for('auth.register', next=request.full_path) }}">Create an account</a>
+      </div>
+    {% endif %}
+  {% elif state == 'accepted' %}
+    <p class="invite-state">This invitation has already been accepted.</p>
+    <a class="btn btn-primary" href="{{ url_for('main.index') }}">Go to the app</a>
+  {% elif state == 'declined' %}
+    <p class="invite-state">This invitation was declined.</p>
+  {% elif state == 'cancelled' %}
+    <p class="invite-state">The owner cancelled this invitation.</p>
+  {% elif state == 'expired' %}
+    <p class="invite-state">This invitation has expired. Ask the workspace owner to send a new one.</p>
+  {% else %}
+    <p class="invite-state">This invitation link is invalid or has already been used.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if state == 'pending' %}
+<script>
+  window.INVITE_TOKEN = {{ token|tojson }};
+  window.INVITE_EMAIL_OK = {{ (current_user.is_authenticated and current_user.email.lower() == (invitation.email or '').lower()) | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/invitation.js') }}"></script>
+{% endif %}
+{% endblock %}

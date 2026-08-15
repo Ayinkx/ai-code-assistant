@@ -20,22 +20,49 @@ API (JSON, all scoped to the current user)
     /workspaces/api/projects/<pid>/chat              AI project chat
     /workspaces/api/projects/<pid>/chat/stream       AI project chat (SSE)
     /workspaces/api/projects/<pid>/analyze           project analysis
-    /workspaces/api/workspaces/<id>/members          list / add members (owner)
-    /workspaces/api/workspaces/<id>/members/<uid>    update role / remove member (owner)
+    /workspaces/api/workspaces/<id>/members          list (members) / add (owner)
+    /workspaces/api/workspaces/<id>/members/<uid>    update role / remove (owner)
+    /workspaces/api/workspaces/<id>/transfer         transfer ownership (owner)
+    /workspaces/api/workspaces/<id>/membership       self-service leave (member)
+    /workspaces/api/workspaces/<id>/heartbeat        presence heartbeat (member)
+    /workspaces/api/workspaces/<id>/invitations      invite lifecycle (owner)
+    /workspaces/api/workspaces/<id>/activity         activity feed (members)
+    /workspaces/api/workspaces/<id>/audit            owner-only audit log
+    /workspaces/api/workspaces/<id>/settings         collaboration settings
+    /workspaces/api/invitations/<token>/accept|decline  public accept flow
+    /workspaces/api/notifications...                 inbox, count, read, prefs
+    /workspaces/api/projects/<pid>/comments          project discussion
+    /workspaces/invitations/<token>                  public invitation landing
+    /workspaces/notifications                        notifications page
+    /workspaces/<id>/members                         members page
+    /workspaces/<id>/audit                           audit page
 """
 
 import json
 from collections import Counter
 from pathlib import Path
 
-from flask import Response, jsonify, render_template, request
+from flask import Response, jsonify, render_template, request, stream_with_context, url_for
 from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.models import Project, ProjectMessage, User, Workspace, WorkspaceMember
+from app.models.activity_event import (
+    EVENT_AI_ANALYSIS_RUN,
+    EVENT_MEMBER_ADDED,
+    EVENT_MEMBER_REMOVED,
+    EVENT_PROJECT_IMPORTED,
+    EVENT_ROLE_CHANGED,
+)
 from app.models.project import SOURCE_ARCHIVE, SOURCE_GITHUB, STATUS_READY
-from app.models.workspace_member import ROLE_OWNER, ROLE_VIEWER, VALID_ROLES
+from app.models.workspace_member import (
+    MEMBER_ROLES,
+    ROLE_OWNER,
+    ROLE_VIEWER,
+    STATUS_ACTIVE,
+)
 from app.services import project_analysis
+from app.services.activity import record_activity
 from app.services.github import (
     GitHubError,
     GitHubInvalidError,
@@ -43,7 +70,10 @@ from app.services.github import (
     validate_full_name,
 )
 from app.services.importing import ProjectImportError, extract_archive, import_github_repo
+from app.services.invitations import cancel_pending_for_user
 from app.services.llm import LLMProviderError, get_provider
+from app.services.notifications import notify
+from app.services.permissions import resolve_workspace
 from app.services.search import search_project
 from app.workspaces import bp
 
@@ -181,16 +211,20 @@ def api_delete_workspace(workspace_id: int):
 
 
 # --------------------------------------------------------------------------
-# API: workspace members (owner only)
+# API: workspace members
+# Listing is member-scoped (any member can see the team); add/update/remove
+# remain owner-only. Removal is a soft-delete that preserves history (135).
 # --------------------------------------------------------------------------
 
 
 @bp.route("/api/workspaces/<int:workspace_id>/members", methods=["GET"])
 @login_required
 def api_list_members(workspace_id: int):
-    _get_workspace(workspace_id)
-    members = WorkspaceMember.query.filter_by(workspace_id=workspace_id).order_by(
-        WorkspaceMember.created_at
+    workspace = resolve_workspace(workspace_id)
+    members = (
+        WorkspaceMember.query.filter_by(workspace_id=workspace.id, status=STATUS_ACTIVE)
+        .order_by(WorkspaceMember.joined_at)
+        .all()
     )
     return jsonify([m.to_dict() for m in members])
 
@@ -204,18 +238,45 @@ def api_add_member(workspace_id: int):
     role = (data.get("role") or ROLE_VIEWER).strip().lower()
     if not username:
         return jsonify({"error": "A username is required."}), 400
-    if role not in VALID_ROLES or role == ROLE_OWNER:
+    if role not in MEMBER_ROLES:
         return jsonify({"error": "Invalid role."}), 400
     user = User.query.filter_by(username=username).first()
     if user is None:
         return jsonify({"error": "No user with that username exists."}), 404
     if user.id == current_user.id:
         return jsonify({"error": "The owner is already a member."}), 400
+
     existing = WorkspaceMember.query.filter_by(workspace_id=workspace_id, user_id=user.id).first()
-    if existing:
+    if existing is not None and existing.status == STATUS_ACTIVE:
         return jsonify({"error": "That user is already a member."}), 409
-    membership = WorkspaceMember(workspace_id=workspace_id, user_id=user.id, role=role)
-    db.session.add(membership)
+    if existing is not None:
+        # Reactivating a previously removed member preserves the row and the
+        # unique (workspace_id, user_id) constraint.
+        existing.reactivate()
+        existing.role = role
+        membership = existing
+        metadata = {"role": role, "reactivated": True}
+    else:
+        membership = WorkspaceMember(workspace_id=workspace_id, user_id=user.id, role=role)
+        db.session.add(membership)
+        metadata = {"role": role}
+
+    record_activity(
+        workspace_id,
+        EVENT_MEMBER_ADDED,
+        actor=current_user,
+        target=membership,
+        metadata=metadata,
+    )
+    db.session.flush()
+    notify(
+        user,
+        "membership",
+        actor=current_user,
+        workspace=db.session.get(Workspace, workspace_id),
+        payload={"title": "You were added to a workspace", "role": role},
+        link=url_for("collaboration.members_page", workspace_id=workspace_id),
+    )
     db.session.commit()
     return jsonify(membership.to_dict()), 201
 
@@ -227,8 +288,28 @@ def api_update_member(workspace_id: int, user_id: int):
     membership = _get_membership(workspace_id, user_id)
     data = request.get_json(silent=True) or {}
     role = (data.get("role") or "").strip().lower()
-    if role not in VALID_ROLES or role == ROLE_OWNER:
+    if role not in MEMBER_ROLES:
         return jsonify({"error": "Invalid role."}), 400
+    if role != membership.role:
+        record_activity(
+            workspace_id,
+            EVENT_ROLE_CHANGED,
+            actor=current_user,
+            target=membership,
+            metadata={"old_role": membership.role, "new_role": role},
+        )
+        notify(
+            membership.user,
+            "role_change",
+            actor=current_user,
+            workspace=db.session.get(Workspace, workspace_id),
+            payload={
+                "title": "Your workspace role changed",
+                "old_role": membership.role,
+                "new_role": role,
+            },
+            link=url_for("collaboration.members_page", workspace_id=workspace_id),
+        )
     membership.role = role
     db.session.commit()
     return jsonify(membership.to_dict())
@@ -239,7 +320,24 @@ def api_update_member(workspace_id: int, user_id: int):
 def api_remove_member(workspace_id: int, user_id: int):
     _get_workspace(workspace_id)
     membership = _get_membership(workspace_id, user_id)
-    db.session.delete(membership)
+    if membership.status != STATUS_ACTIVE:
+        return jsonify({"error": "That member is already removed."}), 409
+    membership.mark_removed()
+    cancel_pending_for_user(workspace_id, user_id, current_user)
+    record_activity(
+        workspace_id,
+        EVENT_MEMBER_REMOVED,
+        actor=current_user,
+        target=membership,
+        metadata={"role": membership.role},
+    )
+    notify(
+        membership.user,
+        "membership",
+        actor=current_user,
+        workspace=db.session.get(Workspace, workspace_id),
+        payload={"title": "You were removed from a workspace", "role": membership.role},
+    )
     db.session.commit()
     return jsonify({"ok": True})
 
@@ -299,6 +397,14 @@ def _import_archive(workspace: Workspace):
     from app.services.importing import store_project_files
 
     store_project_files(project, rows)
+    record_activity(
+        workspace.id,
+        EVENT_PROJECT_IMPORTED,
+        actor=current_user,
+        target=project,
+        metadata={"source": SOURCE_ARCHIVE, "file_count": project.file_count},
+    )
+    db.session.commit()
     return jsonify(project.to_dict()), 201
 
 
@@ -330,6 +436,14 @@ def _import_github(workspace: Workspace):
         db.session.commit()
         return jsonify({"error": str(exc)}), 502
 
+    record_activity(
+        workspace.id,
+        EVENT_PROJECT_IMPORTED,
+        actor=current_user,
+        target=project,
+        metadata={"source": SOURCE_GITHUB, "file_count": project.file_count},
+    )
+    db.session.commit()
     return jsonify(project.to_dict()), 201
 
 
@@ -552,7 +666,7 @@ def api_project_chat_stream(project_id: int):
         db.session.commit()
         yield f"data: {json.dumps({'type': 'done', 'message': message.to_dict()})}\n\n"
 
-    return Response(generate(), mimetype="text/event-stream")
+    return Response(stream_with_context(generate()), mimetype="text/event-stream")
 
 
 # --------------------------------------------------------------------------
@@ -571,4 +685,26 @@ def api_project_analyze(project_id: int):
     kind = (data.get("kind") or "architecture").strip().lower()
     if kind not in project_analysis.ANALYSIS_KINDS:
         return jsonify({"error": "Unsupported analysis kind."}), 400
-    return jsonify(project_analysis.analyze_project(project, kind))
+    result = project_analysis.analyze_project(project, kind)
+    record_activity(
+        project.workspace_id,
+        EVENT_AI_ANALYSIS_RUN,
+        actor=current_user,
+        target=project,
+        metadata={"kind": result["kind"], "project_id": project.id, "project": project.name},
+    )
+    notify(
+        current_user,
+        "ai_event",
+        actor=current_user,
+        workspace=db.session.get(Workspace, project.workspace_id),
+        project=project,
+        payload={"title": f"Analysis complete: {project.name}", "kind": result["kind"]},
+        link=url_for(
+            "workspaces.project_explorer",
+            workspace_id=project.workspace_id,
+            project_id=project.id,
+        ),
+    )
+    db.session.commit()
+    return jsonify(result)

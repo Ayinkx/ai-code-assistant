@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}{{ workspace.name }} Audit - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="collab-header">
+  <div>
+    <h1>
+      <a class="repo-breadcrumb" href="{{ url_for('collaboration.members_page', workspace_id=workspace.id) }}">{{ workspace.name }}</a>
+      / Audit log
+    </h1>
+    <p class="repo-meta">Owner-only security history for membership, roles, invitations, and ownership.</p>
+  </div>
+  <div class="repo-toolbar">
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('workspaces.detail', workspace_id=workspace.id) }}">Projects</a>
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('collaboration.members_page', workspace_id=workspace.id) }}">Team</a>
+  </div>
+</div>
+
+<div class="collab-form-row">
+  <select id="audit-type" class="field-input" style="flex: 0 0 220px;">
+    <option value="">All event types</option>
+    <option value="member.added">Member added</option>
+    <option value="member.removed">Member removed</option>
+    <option value="member.left">Member left</option>
+    <option value="role.changed">Role changed</option>
+    <option value="ownership.transferred">Ownership transferred</option>
+    <option value="invitation.created">Invitation created</option>
+    <option value="invitation.accepted">Invitation accepted</option>
+    <option value="invitation.declined">Invitation declined</option>
+    <option value="invitation.cancelled">Invitation cancelled</option>
+  </select>
+  <input id="audit-actor" class="field-input" type="text" placeholder="Filter by username" style="flex: 0 0 220px;">
+  <button id="audit-filter" class="btn btn-ghost btn-sm" type="button">Filter</button>
+</div>
+
+<div id="audit-list" class="audit-table">
+  <p class="empty-note">Loading audit log...</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.COLLAB_WORKSPACE_ID = {{ workspace.id }};
+</script>
+<script src="{{ url_for('static', filename='js/audit.js') }}"></script>
+{% endblock %}

@@ -120,6 +120,40 @@
       });
   }
 
+  function formatActivityTime(iso) {
+    if (!iso) return "";
+    return new Date(iso).toLocaleString();
+  }
+
+  function loadActivity() {
+    var list = document.getElementById("activity-list");
+    if (!list) return;
+    api("/workspaces/api/workspaces/" + WORKSPACE_ID + "/activity?per_page=10")
+      .then(function (data) {
+        if (!data.items.length) {
+          list.innerHTML = '<p class="empty-note">No activity yet.</p>';
+          return;
+        }
+        var html = "";
+        data.items.forEach(function (event) {
+          var actor = event.actor_username ? event.actor_username : "system";
+          html +=
+            '<div class="activity-row">' +
+            '<span class="activity-dot"></span>' +
+            '<div class="activity-body">' +
+            '<div><strong>' + actor.replace(/[<>&"]/g, "") + "</strong> " + (event.label || "").replace(/[<>&"]/g, "") + "</div>" +
+            '<div class="activity-meta">' + event.event_type + "</div>" +
+            "</div>" +
+            '<div class="activity-time">' + formatActivityTime(event.created_at) + "</div>" +
+            "</div>";
+        });
+        list.innerHTML = html;
+      })
+      .catch(function (error) {
+        list.innerHTML = '<p class="empty-note">' + error.message + "</p>";
+      });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     var wsName = document.getElementById("workspace-name");
     var wsDesc = document.getElementById("workspace-description");
@@ -129,6 +163,7 @@
     document.getElementById("import-archive-btn").addEventListener("click", importArchive);
     document.getElementById("import-github-btn").addEventListener("click", importGithub);
     loadConnectedRepos();
+    loadActivity();
 
     document.getElementById("rename-workspace").addEventListener("click", function () {
       var name = prompt("Rename workspace:", wsName.textContent.trim());
